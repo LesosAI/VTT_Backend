@@ -56,3 +56,10 @@ class CharacterArt(db.Model):
     style = db.Column(db.String(50), nullable=True)
     gender = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    tags = db.relationship('Tag', backref='character', cascade='all, delete-orphan')
+
+class Tag(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    character_id = db.Column(db.Integer, ForeignKey('character_art.id'), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

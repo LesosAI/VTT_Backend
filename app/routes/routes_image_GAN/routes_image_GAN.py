@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file, make_response
-from app.models.user import CharacterArt, User, db
+from app.models.user import CharacterArt, User, db, Tag
 import requests
 from datetime import datetime
 from PIL import Image, ImageDraw
@@ -14,6 +14,7 @@ def generate_image():
     description = data.get('description')
     style = data.get('style')
     gender = data.get('gender')
+    tags = data.get('tags', [])  # Get tags from request
     
     if not username:
         return jsonify({'error': 'Username is required'}), 400
@@ -33,6 +34,12 @@ def generate_image():
     
     try:
         db.session.add(character_art)
+        
+        # Add tags
+        for tag_name in tags:
+            tag = Tag(name=tag_name, character=character_art)
+            db.session.add(tag)
+            
         db.session.commit()
         
         return jsonify({
@@ -59,7 +66,8 @@ def get_character_history(username):
                 'description': char.description,
                 'style': char.style,
                 'gender': char.gender,
-                'created_at': char.created_at.isoformat()
+                'created_at': char.created_at.isoformat(),
+                'tags': [tag.name for tag in char.tags]
             } for char in characters]
         })
     except Exception as e:
@@ -80,7 +88,8 @@ def get_character(character_id):
                 'description': character.description,
                 'style': character.style,
                 'gender': character.gender,
-                'created_at': character.created_at.isoformat()
+                'created_at': character.created_at.isoformat(),
+                'tags': [tag.name for tag in character.tags]  # Add tags to response
             }
         })
     except Exception as e:
@@ -163,4 +172,59 @@ def get_character_token(character_id):
         return response
         
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api_image_GAN.route('/character/<int:character_id>/tags', methods=['POST'])
+def add_tag(character_id):
+    try:
+        data = request.json
+        username = data.get('username')
+        tag_name = data.get('tag')
+        
+        character = CharacterArt.query.get(character_id)
+        if not character:
+            return jsonify({'error': 'Character not found'}), 404
+            
+        # Verify the user owns this character
+        if character.username != username:
+            return jsonify({'error': 'Unauthorized'}), 403
+            
+        # Check if tag already exists
+        existing_tag = Tag.query.filter_by(character_id=character_id, name=tag_name).first()
+        if existing_tag:
+            return jsonify({'error': 'Tag already exists'}), 400
+            
+        # Create new tag
+        tag = Tag(character_id=character_id, name=tag_name)
+        db.session.add(tag)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@api_image_GAN.route('/character/<int:character_id>/tags/<tag_name>', methods=['DELETE'])
+def remove_tag(character_id, tag_name):
+    try:
+        data = request.json
+        username = data.get('username')
+        
+        character = CharacterArt.query.get(character_id)
+        if not character:
+            return jsonify({'error': 'Character not found'}), 404
+            
+        # Verify the user owns this character
+        if character.username != username:
+            return jsonify({'error': 'Unauthorized'}), 403
+            
+        # Find and delete the tag
+        tag = Tag.query.filter_by(character_id=character_id, name=tag_name).first()
+        if tag:
+            db.session.delete(tag)
+            db.session.commit()
+            
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500    
