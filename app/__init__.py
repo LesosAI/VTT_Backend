@@ -15,7 +15,7 @@ import psycopg2
 from psycopg2 import sql
 from urllib.parse import urlparse
 from app.models.user import Plan, User, Subscription
-
+from .routes.routes_image_GAN.routes_image_GAN import api_image_GAN
 import os
 
 
@@ -231,7 +231,7 @@ def create_app():
     # uri="postgres://udak05j6j87jdg:p0d625c18fe2ea5a3c03d51076ca0ea2f2e3003d0acd7c118df00ac535396f581@c5hilnj7pn10vb.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d10vr5oaanqd9t"
     app.register_blueprint(api_login)
     app.register_blueprint(api_SelectPlan_Page)
-
+    app.register_blueprint(api_image_GAN)
     app.register_blueprint(api_bp)
 
     with app.app_context():
