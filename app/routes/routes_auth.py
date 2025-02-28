@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 from app.models import db
-from app.models.user import User, Agent, PhoneNumber
+from app.models.user import User
 import jwt
 from datetime import datetime, timedelta
 
