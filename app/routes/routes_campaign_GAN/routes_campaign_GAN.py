@@ -10,7 +10,6 @@ def get_campaigns(username):
     return jsonify([{
         'id': c.id,
         'name': c.name,
-        'description': c.description,
         'genre': c.genre,
         'tone': c.tone,
         'setting': c.setting,
@@ -20,46 +19,70 @@ def get_campaigns(username):
 @api_campaign_GAN.route('/campaigns', methods=['POST'])
 def create_campaign():
     data = request.json
+    if not data.get('name') or not data.get('username'):
+        return jsonify({'error': 'Name and username are required'}), 400
+        
     campaign = Campaign(
         name=data['name'],
         username=data['username'],
-        description=data.get('description'),
         genre=data.get('genre'),
         tone=data.get('tone'),
         setting=data.get('setting')
     )
-    db.session.add(campaign)
+    
+    try:
+        db.session.add(campaign)
+        db.session.commit()
+        return jsonify({
+            'id': campaign.id,
+            'name': campaign.name,
+            'genre': campaign.genre,
+            'tone': campaign.tone,
+            'setting': campaign.setting,
+            'created_at': str(campaign.created_at)
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@api_campaign_GAN.route('/campaigns/<int:campaign_id>/generate', methods=['POST'])
+def generate_campaign_content(campaign_id):
+    data = request.json
+    campaign = Campaign.query.get_or_404(campaign_id)
+    
+    # Verify user owns this campaign
+    if campaign.username != data['username']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    # Here you would call your text generation service
+    # For now, let's just create a placeholder
+    generated_text = f"Generated content for {campaign.name} in {campaign.genre} style..."
+    
+    # Save the generated content with description
+    content = CampaignContent(
+        campaign_id=campaign_id,
+        content=generated_text,
+        description=data.get('description')  # Optional description from user
+    )
+    db.session.add(content)
     db.session.commit()
+    
     return jsonify({
-        'id': campaign.id,
-        'name': campaign.name,
-        'description': campaign.description
+        'id': content.id,
+        'content': content.content,
+        'description': content.description,
+        'created_at': str(content.created_at)
     })
 
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/content', methods=['GET'])
 def get_campaign_content(campaign_id):
-    content = CampaignContent.query.filter_by(campaign_id=campaign_id).all()
-    result = []
-    for item in content:
-        if item.content_type == 'character':
-            char = CharacterArt.query.get(item.content_id)
-            if char:
-                result.append({
-                    'type': 'character',
-                    'id': char.id,
-                    'image_url': char.image_url,
-                    'description': char.description
-                })
-        elif item.content_type == 'map':
-            map_item = Map.query.get(item.content_id)
-            if map_item:
-                result.append({
-                    'type': 'map',
-                    'id': map_item.id,
-                    'image_url': map_item.image_url,
-                    'description': map_item.description
-                })
-    return jsonify(result)
+    contents = CampaignContent.query.filter_by(campaign_id=campaign_id).order_by(CampaignContent.created_at.desc()).all()
+    return jsonify([{
+        'id': content.id,
+        'content': content.content,
+        'description': content.description,
+        'created_at': str(content.created_at)
+    } for content in contents])
 
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/content', methods=['POST'])
 def add_campaign_content(campaign_id):
@@ -83,7 +106,6 @@ def update_campaign(campaign_id):
         return jsonify({'error': 'Unauthorized'}), 403
     
     campaign.name = data['name']
-    campaign.description = data.get('description')
     campaign.genre = data.get('genre')
     campaign.tone = data.get('tone')
     campaign.setting = data.get('setting')
@@ -92,8 +114,23 @@ def update_campaign(campaign_id):
     return jsonify({
         'id': campaign.id,
         'name': campaign.name,
-        'description': campaign.description,
         'genre': campaign.genre,
         'tone': campaign.tone,
         'setting': campaign.setting
+    })
+
+@api_campaign_GAN.route('/campaigns/<int:campaign_id>/content/<int:content_id>', methods=['PUT'])
+def update_campaign_content(campaign_id, content_id):
+    data = request.json
+    content = CampaignContent.query.filter_by(id=content_id, campaign_id=campaign_id).first_or_404()
+    
+    # Update description
+    content.description = data.get('description')
+    db.session.commit()
+    
+    return jsonify({
+        'id': content.id,
+        'content': content.content,
+        'description': content.description,
+        'created_at': str(content.created_at)
     })
