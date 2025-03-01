@@ -72,3 +72,20 @@ class Map(db.Model):
     style = db.Column(db.String(50), nullable=True)
     tone = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Campaign(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    username = db.Column(db.String(150), ForeignKey('user.username'), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    genre = db.Column(db.String(50), nullable=True)
+    tone = db.Column(db.String(50), nullable=True)
+    setting = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class CampaignContent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    campaign_id = db.Column(db.Integer, ForeignKey('campaign.id'), nullable=False)
+    content_type = db.Column(db.String(50), nullable=False)  # 'character', 'map', etc.
+    content_id = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

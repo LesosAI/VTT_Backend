@@ -245,6 +245,14 @@ def create_app():
         has_changes = check_schema_changes(app)
         # db.drop_all()
         # drop_all_tables()
+
+
+        # Initialize plans and default user
+        # drop_all_tables()
+        # db.create_all()
+        # initialize_plans()
+        # initialize_default_user()
+
         if has_changes:
             print("Database schema needs to be updated!")
             # db.drop_all()
