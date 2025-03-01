@@ -77,16 +77,15 @@ class Campaign(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     username = db.Column(db.String(150), ForeignKey('user.username'), nullable=False)
-    genre = db.Column(db.String(50), nullable=True)
-    tone = db.Column(db.String(50), nullable=True)
-    setting = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    # Add relationship to CampaignContent
     contents = db.relationship('CampaignContent', backref='campaign', lazy=True)
 
 class CampaignContent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     campaign_id = db.Column(db.Integer, ForeignKey('campaign.id'), nullable=False)
-    content = db.Column(db.Text, nullable=False)  # The generated content
-    description = db.Column(db.Text, nullable=True)  # User-provided description
+    content = db.Column(db.Text, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    genre = db.Column(db.String(50), nullable=True)
+    tone = db.Column(db.String(50), nullable=True)
+    setting = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

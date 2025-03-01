@@ -10,9 +10,6 @@ def get_campaigns(username):
     return jsonify([{
         'id': c.id,
         'name': c.name,
-        'genre': c.genre,
-        'tone': c.tone,
-        'setting': c.setting,
         'created_at': str(c.created_at)
     } for c in campaigns])
 
@@ -24,10 +21,7 @@ def create_campaign():
         
     campaign = Campaign(
         name=data['name'],
-        username=data['username'],
-        genre=data.get('genre'),
-        tone=data.get('tone'),
-        setting=data.get('setting')
+        username=data['username']
     )
     
     try:
@@ -36,9 +30,6 @@ def create_campaign():
         return jsonify({
             'id': campaign.id,
             'name': campaign.name,
-            'genre': campaign.genre,
-            'tone': campaign.tone,
-            'setting': campaign.setting,
             'created_at': str(campaign.created_at)
         })
     except Exception as e:
@@ -56,13 +47,16 @@ def generate_campaign_content(campaign_id):
     
     # Here you would call your text generation service
     # For now, let's just create a placeholder
-    generated_text = f"Generated content for {campaign.name} in {campaign.genre} style..."
+    generated_text = f"Generated content for {campaign.name} in {data['genre']} style..."
     
-    # Save the generated content with description
+    # Save the generated content with all fields
     content = CampaignContent(
         campaign_id=campaign_id,
         content=generated_text,
-        description=data.get('description')  # Optional description from user
+        description=data.get('description'),
+        genre=data.get('genre'),
+        tone=data.get('tone'),
+        setting=data.get('setting')
     )
     db.session.add(content)
     db.session.commit()
@@ -71,6 +65,9 @@ def generate_campaign_content(campaign_id):
         'id': content.id,
         'content': content.content,
         'description': content.description,
+        'genre': content.genre,
+        'tone': content.tone,
+        'setting': content.setting,
         'created_at': str(content.created_at)
     })
 
@@ -81,6 +78,9 @@ def get_campaign_content(campaign_id):
         'id': content.id,
         'content': content.content,
         'description': content.description,
+        'genre': content.genre,
+        'tone': content.tone,
+        'setting': content.setting,
         'created_at': str(content.created_at)
     } for content in contents])
 
@@ -106,17 +106,12 @@ def update_campaign(campaign_id):
         return jsonify({'error': 'Unauthorized'}), 403
     
     campaign.name = data['name']
-    campaign.genre = data.get('genre')
-    campaign.tone = data.get('tone')
-    campaign.setting = data.get('setting')
     
     db.session.commit()
     return jsonify({
         'id': campaign.id,
         'name': campaign.name,
-        'genre': campaign.genre,
-        'tone': campaign.tone,
-        'setting': campaign.setting
+        'created_at': str(campaign.created_at)
     })
 
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/content/<int:content_id>', methods=['PUT'])
