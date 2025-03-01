@@ -15,7 +15,8 @@ class User(db.Model):
         foreign_keys=[parent_username]
     )
     email = db.Column(db.String(150), unique=True, nullable=False)  # Add this line
-
+    first_name = db.Column(db.String(150), nullable=True)
+    last_name = db.Column(db.String(150), nullable=True)
 
     # New fields for subscription
     stripe_customer_id = db.Column(db.String(255), unique=True, nullable=True)

@@ -189,3 +189,60 @@ def get_user_dashboard_data(username):
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@api_login.route('/user-profile/<username>', methods=['GET'])
+def get_user_profile(username):
+    try:
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        return jsonify({
+            "firstName": user.first_name,
+            "lastName": user.last_name,
+            "email": user.email
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@api_login.route('/update-profile', methods=['POST'])
+def update_profile():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        user.first_name = data.get('firstName', user.first_name)
+        user.last_name = data.get('lastName', user.last_name)
+        
+        db.session.commit()
+        return jsonify({"message": "Profile updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@api_login.route('/change-password', methods=['POST'])
+def change_password():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        current_password = data.get('currentPassword')
+        new_password = data.get('newPassword')
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        if not check_password_hash(user.password, current_password):
+            return jsonify({"error": "Current password is incorrect"}), 400
+
+        user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+        
+        return jsonify({"message": "Password updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
