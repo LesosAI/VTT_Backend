@@ -33,12 +33,21 @@ def create_subscription():
 
     user = User.query.filter_by(username=username).first()
     plan = Plan.query.filter_by(stripe_price_id=price_id).first()
-    print(f"Plan usage limit: {plan.usage_limit}")
     
-    if not user or not plan:
-        print(f"User or Plan not found: user={user}, plan={plan}")
-        return jsonify({"error": "User or Plan not found"}), 404
+    # Add debug logging
+    print(f"Looking for plan with price_id: {price_id}")
+    print(f"Available plans: {[{p.name: p.stripe_price_id} for p in Plan.query.all()]}")
+    
+    if not user:
+        print(f"User not found: {username}")
+        return jsonify({"error": "User not found"}), 404
+        
+    if not plan:
+        print(f"Plan not found for price_id: {price_id}")
+        return jsonify({"error": "Invalid plan or price ID"}), 404
 
+    print(f"Found plan: {plan.name} with usage limit: {plan.usage_limit}")
+    
     try:
         print("Starting subscription creation process")
         # Create or get Stripe customer

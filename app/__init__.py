@@ -23,44 +23,38 @@ import os
 
 def initialize_plans():
     plans = [
-            {
-        "name": "Individual",
-        "description": "Best for individual enterprise",
-        "price": 192.99,  # 20% discount for yearly plan
-        "stripe_price_id": "price_1QH8TX02khdf3R0AlBJjp5Ll",  # Yearly price ID
-        "interval": "year",
-        "usage_limit": 1  # 1 agent limit
-    },
-    {
-        "name": "Individual Monthly",
-        "description": "Best for individual enterprise",
-        "price": 19.99,  # Monthly price
-        "stripe_price_id": "price_1QH8TX02khdf3R0AJUTGTXIR",  # Monthly price ID
-        "interval": "month",
-        "usage_limit": 1  # 1 agent limit
-    },
-    # Agency Plans
-    {
-        "name": "Agency",
-        "description": "Perfect for agencies and growing businesses",
-        "price": 2399.99,  # 20% discount for yearly plan
-        "stripe_price_id": "price_1QH8VF02khdf3R0AnAjoGqGy",  # Yearly price ID
-        "interval": "year",
-        "usage_limit": 3  # 3 agents limit
-    },
-    {
-        "name": "Agency Monthly",
-        "description": "Perfect for agencies and growing businesses",
-        "price": 249.99,  # Monthly price
-        "stripe_price_id": "price_1QH8UP02khdf3R0AfcfXmAoR",  # Monthly price ID
-        "interval": "month",
-        "usage_limit": 3  # 3 agents limit
-    }
-    
+        {
+            "name": "Free",
+            "description": "Basic features to get you started",
+            "price": 0.00,
+            "stripe_price_id": "",  # No stripe price ID for free plan
+            "interval": "month",
+            "usage_limit": 1  # Limited usage for free tier
+        },
+        {
+            "name": "Game Master Monthly",
+            "description": "Full access to all Game Master features",
+            "price": 9.00,
+            "stripe_price_id": "price_1QijlK02khdf3R0AN2aXLQJP",
+            "interval": "month",
+            "usage_limit": None  # Unlimited usage
+        },
+        {
+            "name": "Game Master Yearly",
+            "description": "Full access to all Game Master features",
+            "price": 108.00,  # Save by paying yearly
+            "stripe_price_id": "price_1QijlK02khdf3R0AMM6ohbah",
+            "interval": "year",
+            "usage_limit": None  # Unlimited usage
+        },
+       
     ]
 
     for plan_data in plans:
-        existing_plan = Plan.query.filter_by(stripe_price_id=plan_data['stripe_price_id']).first()
+        existing_plan = Plan.query.filter_by(
+            name=plan_data['name'], 
+            interval=plan_data['interval']
+        ).first()
         if not existing_plan:
             new_plan = Plan(
                 name=plan_data['name'],
@@ -68,8 +62,7 @@ def initialize_plans():
                 price=plan_data['price'],
                 stripe_price_id=plan_data['stripe_price_id'],
                 interval=plan_data['interval'],
-                usage_limit=plan_data.get('usage_limit')  # Set usage limit
-
+                usage_limit=plan_data.get('usage_limit')
             )
             db.session.add(new_plan)
     
