@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file, make_response
-from app.models.user import CharacterArt, User, db, Tag
+from app.models.user import CharacterArt, User, db, Tag, Map
 import requests
 from datetime import datetime
 from PIL import Image, ImageDraw
@@ -227,4 +227,5 @@ def remove_tag(character_id, tag_name):
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500    
+        return jsonify({'error': str(e)}), 500
+

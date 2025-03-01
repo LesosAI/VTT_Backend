@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 from app.models.user import Plan, User, Subscription
 from .routes.routes_image_GAN.routes_image_GAN import api_image_GAN
 from .routes.routes_map_GAN.routes_map_GAN import api_map_GAN
+from .routes.routes_campaign_GAN.routes_campaign_GAN import api_campaign_GAN
 import os
 
 
@@ -235,6 +236,8 @@ def create_app():
     app.register_blueprint(api_image_GAN)
     app.register_blueprint(api_bp)
     app.register_blueprint(api_map_GAN)
+    app.register_blueprint(api_campaign_GAN)
+
 
     with app.app_context():
         # Check for schema changes

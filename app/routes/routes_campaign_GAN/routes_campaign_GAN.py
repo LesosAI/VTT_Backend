@@ -5,8 +5,8 @@ from datetime import datetime
 from PIL import Image, ImageDraw
 import io
 
-api_map_GAN = Blueprint("api_map_GAN", __name__, url_prefix="/api")
+api_campaign_GAN = Blueprint("api_campaign_GAN", __name__, url_prefix="/api")
 
-@api_map_GAN.route('/generate-map', methods=['POST'])
-def generate_map():
+@api_campaign_GAN.route('/generate-campaign', methods=['POST'])
+def generate_campaign():
     data = request.json
