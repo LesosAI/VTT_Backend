@@ -66,7 +66,7 @@ def set_processing(f):
 
 def run_task_with_context(app, username, task_id, task_function, request_data):
     with app.app_context():
-        background_task = BackgroundTask.query.filter_by(username=username).first()
+        background_task = BackgroundTask.query.filter_by(task_id=task_id).first()
         test_table = TestTable.query.filter_by(username=username).first()
         
         if not test_table:
@@ -105,9 +105,9 @@ def main_function(request_data):
         test_table = TestTable(username=user_id, processing=False)
         db.session.add(test_table)
         db.session.commit()
-
-    time.sleep(10)  # Simulate work
-    
+    print("Sleeping for 3 seconds")
+    time.sleep(3)  # Simulate work
+    print("Sleeping for 3 seconds done")
     test_table.result = "Task completed successfully"
     test_table.processing = False
     db.session.commit()
