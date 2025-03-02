@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify, send_file, make_response
+from flask import Blueprint, request, jsonify, send_file, make_response, current_app
 from app.models.user import CharacterArt, User, db, Tag, Map
 import requests
 from datetime import datetime
 from PIL import Image, ImageDraw
 import io
+import time
+from ...utils.background_tasks import run_in_background, with_app_context, update_task_status
 
 api_image_GAN = Blueprint("api_image_GAN", __name__, url_prefix="/api")
 
@@ -228,4 +230,76 @@ def remove_tag(character_id, tag_name):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@api_image_GAN.route('/test-background-task', methods=['POST'])
+def test_background_task():
+    """Test endpoint for background task processing"""
+    try:
+        data = request.json
+        user_id = data.get('username')
+        duration = data.get('duration', 15)  # Default 15 seconds
+        
+        if not user_id:
+            return jsonify({'error': 'Username is required'}), 400
+
+        user = User.query.filter_by(username=user_id).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Set initial processing state
+        update_task_status(user_id, True)
+        
+        # Start background task
+        simulate_long_task(user_id, duration)
+        
+        return jsonify({
+            'message': 'Background task started',
+            'status': 'processing',
+            'estimated_duration': duration
+        }), 202
+
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+@api_image_GAN.route('/task-status/<username>', methods=['GET'])
+def get_task_status(username):
+    """Get the current processing status for a user"""
+    try:
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        return jsonify({
+            'processing': user.processing,
+            'username': user.username
+        })
+
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+@run_in_background
+@with_app_context
+def simulate_long_task(user_id: str, duration: int) -> None:
+    """
+    Simulate a long-running task with progress updates.
+    
+    Args:
+        user_id: The username of the user
+        duration: Task duration in seconds
+    """
+    try:
+        print(f"Starting simulated task for user {user_id}, duration: {duration}s")
+        
+        # Simulate work
+        time.sleep(duration)
+        
+        # Update status when complete
+        update_task_status(user_id, False)
+        print(f"Task completed for user {user_id}")
+        
+    except Exception as e:
+        print(f"Error in background task for user {user_id}: {e}")
+        update_task_status(user_id, False)
 
