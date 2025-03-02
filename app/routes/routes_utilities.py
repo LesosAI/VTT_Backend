@@ -116,19 +116,35 @@ def main_function(request_data):
 @api_bp.route('/task/status/<task_id>', methods=['GET'])
 def get_task_status(task_id):
     try:
+        # First get the BackgroundTask to find the username
         background_task = BackgroundTask.query.filter_by(task_id=task_id).first()
-        
         if not background_task:
             return jsonify({
                 'status': 'error',
                 'message': 'Task not found'
             }), 404
+
+        # Use the username from background_task to get TestTable entry
+        user_id = background_task.username
+        test_table = TestTable.query.filter_by(username=user_id).first()
+        if not test_table:
+            return jsonify({
+                'status': 'error',
+                'message': 'Test table entry not found'
+            }), 404
             
         return jsonify({
             'task_id': background_task.task_id,
-            'processing': background_task.processing,
-            'result': background_task.result,
-            'created_at': background_task.created_at
+            'background_task': {
+                'processing': background_task.processing,
+                'result': background_task.result,
+                'created_at': background_task.created_at
+            },
+            'test_table': {
+                'processing': test_table.processing,
+                'result': test_table.result,
+                'created_at': test_table.created_at
+            }
         })
         
     except Exception as e:
