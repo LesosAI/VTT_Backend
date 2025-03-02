@@ -9,6 +9,8 @@ from ..utils.background_tasks import run_in_background, with_app_context, update
 import time
 from flask import Flask, jsonify, request, Blueprint, current_app
 import threading
+import uuid
+
 api_bp = Blueprint("api", __name__, url_prefix="")
 
 load_dotenv()
@@ -21,25 +23,22 @@ def hello_world():
 def set_processing(f):
     def wrapper(*args, **kwargs):
         try:
-            # Get user_id from request arguments
             user_id = request.args.get('user_id')
+            task_id = str(uuid.uuid4())  # Generate unique task ID
             
-            # Get or create BackgroundTask instance
-            background_task = BackgroundTask.query.filter_by(username=user_id).first()
-            
-            if not background_task:
-                background_task = BackgroundTask(username=user_id, processing=False)
-                db.session.add(background_task)
-            
-            db.session.commit()
-            
-            # Set processing to True
-            background_task.processing = True
+            # Create new BackgroundTask instance for this specific task
+            background_task = BackgroundTask(
+                username=user_id,
+                task_id=task_id,
+                processing=True
+            )
+            db.session.add(background_task)
             db.session.commit()
             
             # Extract all needed data from request
             request_data = {
                 'user_id': user_id,
+                'task_id': task_id,  # Pass task_id to the background process
                 'args': dict(request.args),
                 'form': dict(request.form),
                 'json': request.get_json(silent=True)
@@ -49,11 +48,14 @@ def set_processing(f):
             app = current_app._get_current_object()
             thread = threading.Thread(
                 target=run_task_with_context,
-                args=(app, user_id, f, request_data)
+                args=(app, user_id, task_id, f, request_data)
             )
             thread.start()
             
-            return jsonify({'message': 'Processing started. CSV will be available soon.'}), 202
+            return jsonify({
+                'message': 'Processing started',
+                'task_id': task_id  # Return task_id to client for status checking
+            }), 202
             
         except Exception as e:
             print(f"Error in processing decorator: {str(e)}")
@@ -62,7 +64,7 @@ def set_processing(f):
     wrapper.__name__ = f.__name__
     return wrapper
 
-def run_task_with_context(app, username, task_function, request_data):
+def run_task_with_context(app, username, task_id, task_function, request_data):
     with app.app_context():
         background_task = BackgroundTask.query.filter_by(username=username).first()
         test_table = TestTable.query.filter_by(username=username).first()
@@ -111,23 +113,22 @@ def main_function(request_data):
     db.session.commit()
     return True
 
-@api_bp.route('/threadingtest/status/<username>', methods=['GET'])
-def get_task_status(username):
+@api_bp.route('/task/status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
     try:
-        background_task = BackgroundTask.query.filter_by(username=username).first()
-        test_table = TestTable.query.filter_by(username=username).first()
+        background_task = BackgroundTask.query.filter_by(task_id=task_id).first()
         
-        if not background_task or not test_table:
+        if not background_task:
             return jsonify({
                 'status': 'error',
-                'message': 'No task found for this user'
+                'message': 'Task not found'
             }), 404
             
         return jsonify({
+            'task_id': background_task.task_id,
             'processing': background_task.processing,
             'result': background_task.result,
-            'processing_table': test_table.processing,
-            'result_table': test_table.result
+            'created_at': background_task.created_at
         })
         
     except Exception as e:

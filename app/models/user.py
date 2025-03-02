@@ -93,9 +93,14 @@ class CampaignContent(db.Model):
 class BackgroundTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), ForeignKey('user.username'), nullable=False)
+    task_id = db.Column(db.String(150), nullable=False, unique=True)  # Add unique task identifier
+    task_type = db.Column(db.String(50), nullable=True)  # Optional: to identify different types of tasks
     processing = db.Column(db.Boolean, default=False)
     result = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Add index for efficient querying
+    __table_args__ = (db.Index('idx_username_task_id', 'username', 'task_id'),)
 
 class TestTable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
