@@ -28,15 +28,14 @@ class User(db.Model):
 class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    stripe_subscription_id = db.Column(db.String(255), unique=True, nullable=False)
+    stripe_subscription_id = db.Column(db.String(255), unique=True, nullable=True)
     status = db.Column(db.String(50), nullable=False, default='active')
     plan_id = db.Column(db.Integer, db.ForeignKey('plan.id'), nullable=False)
     current_period_start = db.Column(db.DateTime, nullable=False)
     current_period_end = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    usage_count = db.Column(db.Integer, default=0)  # Number of times the user has used the service in the current period
+    usage_count = db.Column(db.Integer, default=0)
 
 
 class Plan(db.Model):

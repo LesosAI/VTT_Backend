@@ -381,29 +381,58 @@ def cancel_user_subscription(username):
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        subscription = user.subscription
-        if not subscription:
-            return jsonify({"error": "No active subscription found"}), 404
+        # Get or create free plan
+        free_plan = Plan.query.filter_by(name="Free").first()
+        if not free_plan:
+            free_plan = Plan(
+                name="Free",
+                description="Basic features to get you started",
+                price=0.00,
+                stripe_price_id="",
+                interval="month",
+                usage_limit=1
+            )
+            db.session.add(free_plan)
+            db.session.commit()  # Commit the free plan first
 
-        # Cancel the subscription in Stripe
-        stripe_subscription = stripe.Subscription.delete(
-            subscription.stripe_subscription_id
+        current_time = datetime.utcnow()
+        
+        # Find existing subscription
+        existing_subscription = Subscription.query.filter_by(user_id=user.id).first()
+        if existing_subscription:
+            # If there's a Stripe subscription, cancel it
+            if existing_subscription.stripe_subscription_id:
+                try:
+                    stripe.Subscription.delete(existing_subscription.stripe_subscription_id)
+                except stripe.error.StripeError as e:
+                    print(f"Stripe error while canceling subscription: {str(e)}")
+
+            # Delete the existing subscription
+            db.session.delete(existing_subscription)
+            db.session.commit()
+
+        # Create new subscription with free plan
+        new_subscription = Subscription(
+            user_id=user.id,
+            plan_id=free_plan.id,
+            stripe_subscription_id=None,
+            status='active',
+            current_period_start=current_time,
+            current_period_end=current_time + timedelta(days=30),
+            usage_count=0
         )
-
-        # Update local subscription status
-        subscription.status = 'canceled'
+        db.session.add(new_subscription)
         db.session.commit()
 
         return jsonify({
-            "message": "Subscription canceled successfully",
-            "status": subscription.status
+            "message": "Successfully switched to free plan",
+            "status": "active"
         }), 200
 
-    except stripe.error.StripeError as e:
-        return jsonify({"error": str(e)}), 400
     except Exception as e:
         print(f"Error canceling subscription: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @api_SelectPlan_Page.route('/api/users/<username>/payment-method', methods=['GET'])
 def get_payment_method(username):
