@@ -26,27 +26,30 @@ def set_processing(f):
             
             # Get or create TestThreading instance
             test_thread = TestThreading.query.filter_by(username=user_id).first()
-            test_table = TestTable.query.filter_by(username=user_id).first()
             
             if not test_thread:
                 test_thread = TestThreading(username=user_id, processing=False)
                 db.session.add(test_thread)
             
-            if not test_table:
-                test_table = TestTable(username=user_id, processing=False)
-                db.session.add(test_table)
-                
             db.session.commit()
             
             # Set processing to True
             test_thread.processing = True
             db.session.commit()
             
+            # Extract all needed data from request
+            request_data = {
+                'user_id': user_id,
+                'args': dict(request.args),
+                'form': dict(request.form),
+                'json': request.get_json(silent=True)
+            }
+            
             # Start the background process
             app = current_app._get_current_object()
             thread = threading.Thread(
                 target=run_task_with_context,
-                args=(app, user_id, f, request)
+                args=(app, user_id, f, request_data)
             )
             thread.start()
             
@@ -59,24 +62,23 @@ def set_processing(f):
     wrapper.__name__ = f.__name__
     return wrapper
 
-def run_task_with_context(app, username, task_function, request):
+def run_task_with_context(app, username, task_function, request_data):
     with app.app_context():
         test_thread = TestThreading.query.filter_by(username=username).first()
         test_table = TestTable.query.filter_by(username=username).first()
         
-        if not test_thread or not test_table:
-            print(f"Required entries for user {username} not found.")
-            return
+        if not test_table:
+            test_table = TestTable(username=username, processing=False)
+            db.session.add(test_table)
+            db.session.commit()
 
         try:
             # Run the actual task function
-            task_function(username, request)
+            task_function(request_data)
             
             # Update both tables after task completion
             test_thread.processing = False
             test_thread.result = "Task completed successfully"
-            test_table.result = "Task completed successfully"
-            test_table.processing = False
             db.session.commit()
 
             print(f"Processing completed for user {username}")
@@ -84,14 +86,29 @@ def run_task_with_context(app, username, task_function, request):
         except Exception as e:
             print(f"Error during processing for user {username}: {e}")
             test_thread.processing = False
-            test_table.processing = False
             db.session.commit()
 
 @api_bp.route('/threadingtest', methods=['POST'])
 @set_processing
-def main_function(username=None, request=None):
+def main_function(request_data):
     # This is your long-running task logic
+    user_id = request_data['user_id']
+    # You can access other request data like this:
+    # args_data = request_data['args']
+    # form_data = request_data['form']
+    # json_data = request_data['json']
+    
+    test_table = TestTable.query.filter_by(username=user_id).first()
+    if not test_table:
+        test_table = TestTable(username=user_id, processing=False)
+        db.session.add(test_table)
+        db.session.commit()
+
     time.sleep(10)  # Simulate work
+    
+    test_table.result = "Task completed successfully"
+    test_table.processing = False
+    db.session.commit()
     return True
 
 @api_bp.route('/threadingtest/status/<username>', methods=['GET'])
