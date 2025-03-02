@@ -18,28 +18,48 @@ load_dotenv()
 def hello_world():
     return 'Hello, World this is an update!!'
 
+def set_processing(f):
+    def wrapper(*args, **kwargs):
+        try:
+            # Get user_id from request arguments
+            user_id = request.args.get('user_id')
+            
+            # Get or create TestThreading instance
+            test_thread = TestThreading.query.filter_by(username=user_id).first()
+            if not test_thread:
+                test_thread = TestThreading(username=user_id, processing=False)
+                db.session.add(test_thread)
+                db.session.commit()
+            
+            # Set processing to True
+            test_thread.processing = True
+            db.session.commit()
+            
+            # Call the original function
+            return f(*args, **kwargs)
+            
+        except Exception as e:
+            print(f"Error in processing decorator: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+            
+    # Preserve the original function's metadata
+    wrapper.__name__ = f.__name__
+    return wrapper
+
 @api_bp.route('/threadingtest', methods=['POST'])
+@set_processing
 def Image_to_CSV():
     try:
         start_time = time.time()
         user_id = request.args.get('user_id')
         
-        # Check for existing entries or create new ones
-        test_thread = TestThreading.query.filter_by(username=user_id).first()
+        # You can remove the manual processing=True setting since the decorator handles it
         test_table = TestTable.query.filter_by(username=user_id).first()
-
-        if not test_thread:
-            test_thread = TestThreading(username=user_id, processing=False)
-            db.session.add(test_thread)
         
         if not test_table:
             test_table = TestTable(username=user_id, processing=False)
             db.session.add(test_table)
         
-        db.session.commit()
-
-        # Set the processing state to True
-        test_thread.processing = True
         db.session.commit()
         
         # Start the background process
