@@ -26,46 +26,73 @@ def set_processing(f):
             
             # Get or create TestThreading instance
             test_thread = TestThreading.query.filter_by(username=user_id).first()
+            test_table = TestTable.query.filter_by(username=user_id).first()
+            
             if not test_thread:
                 test_thread = TestThreading(username=user_id, processing=False)
                 db.session.add(test_thread)
-                db.session.commit()
+            
+            if not test_table:
+                test_table = TestTable(username=user_id, processing=False)
+                db.session.add(test_table)
+                
+            db.session.commit()
             
             # Set processing to True
             test_thread.processing = True
             db.session.commit()
             
-            # Call the original function
-            return f(*args, **kwargs)
+            # Start the background process
+            app = current_app._get_current_object()
+            thread = threading.Thread(
+                target=run_task_with_context,
+                args=(app, user_id, f, request)
+            )
+            thread.start()
+            
+            return jsonify({'message': 'Processing started. CSV will be available soon.'}), 202
             
         except Exception as e:
             print(f"Error in processing decorator: {str(e)}")
             return jsonify({'error': str(e)}), 500
             
-    # Preserve the original function's metadata
     wrapper.__name__ = f.__name__
     return wrapper
 
+def run_task_with_context(app, username, task_function, request):
+    with app.app_context():
+        test_thread = TestThreading.query.filter_by(username=username).first()
+        test_table = TestTable.query.filter_by(username=username).first()
+        
+        if not test_thread or not test_table:
+            print(f"Required entries for user {username} not found.")
+            return
+
+        try:
+            # Run the actual task function
+            task_function(username, request)
+            
+            # Update both tables after task completion
+            test_thread.processing = False
+            test_thread.result = "Task completed successfully"
+            test_table.result = "Task completed successfully"
+            test_table.processing = False
+            db.session.commit()
+
+            print(f"Processing completed for user {username}")
+
+        except Exception as e:
+            print(f"Error during processing for user {username}: {e}")
+            test_thread.processing = False
+            test_table.processing = False
+            db.session.commit()
+
 @api_bp.route('/threadingtest', methods=['POST'])
 @set_processing
-def Image_to_CSV():
-    try:
-
-        user_id = request.args.get('user_id')
-        
-        # You can remove the manual processing=True setting since the decorator handles it
-
-        
-        
-        # Start the background process
-        app = current_app._get_current_object()
-        function_to_run_and_monitor(app, user_id, request, long_running_task)
-
-        return jsonify({'message': 'Processing started. CSV will be available soon.'}), 202
-
-    except Exception as e:
-        print("Error:", str(e))
-        return jsonify({'error': str(e)}), 500
+def main_function(username=None, request=None):
+    # This is your long-running task logic
+    time.sleep(10)  # Simulate work
+    return True
 
 @api_bp.route('/threadingtest/status/<username>', methods=['GET'])
 def get_task_status(username):
