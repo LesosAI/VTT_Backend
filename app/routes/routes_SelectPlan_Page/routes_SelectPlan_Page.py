@@ -495,3 +495,31 @@ def update_payment_method(username):
         print(f"Error updating payment method: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
+@api_SelectPlan_Page.route('/api/users/<username>/invoices', methods=['GET'])
+def get_user_invoices(username):
+    try:
+        user = User.query.filter_by(username=username).first()
+        if not user or not user.stripe_customer_id:
+            return jsonify({"error": "User not found"}), 404
+
+        # Fetch invoices from Stripe
+        invoices = stripe.Invoice.list(
+            customer=user.stripe_customer_id,
+            limit=100  # Adjust limit as needed
+        )
+
+        invoice_data = [{
+            'id': invoice.id,
+            'date': datetime.fromtimestamp(invoice.created).isoformat(),
+            'amount_paid': invoice.amount_paid / 100,  # Convert from cents to dollars
+            'invoice_pdf': invoice.invoice_pdf,
+            'number': invoice.number,
+            'status': invoice.status
+        } for invoice in invoices.data]
+
+        return jsonify(invoice_data), 200
+
+    except Exception as e:
+        print(f"Error fetching invoices: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
