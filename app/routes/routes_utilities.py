@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
 from sqlalchemy.exc import SQLAlchemyError
-from app.models.user import User, TestThreading, TestTable
+from app.models.user import User, BackgroundTask, TestTable
 from app.models import db
 from ..utils.background_tasks import run_in_background, with_app_context, update_task_status
 import time
@@ -24,17 +24,17 @@ def set_processing(f):
             # Get user_id from request arguments
             user_id = request.args.get('user_id')
             
-            # Get or create TestThreading instance
-            test_thread = TestThreading.query.filter_by(username=user_id).first()
+            # Get or create BackgroundTask instance
+            background_task = BackgroundTask.query.filter_by(username=user_id).first()
             
-            if not test_thread:
-                test_thread = TestThreading(username=user_id, processing=False)
-                db.session.add(test_thread)
+            if not background_task:
+                background_task = BackgroundTask(username=user_id, processing=False)
+                db.session.add(background_task)
             
             db.session.commit()
             
             # Set processing to True
-            test_thread.processing = True
+            background_task.processing = True
             db.session.commit()
             
             # Extract all needed data from request
@@ -64,7 +64,7 @@ def set_processing(f):
 
 def run_task_with_context(app, username, task_function, request_data):
     with app.app_context():
-        test_thread = TestThreading.query.filter_by(username=username).first()
+        background_task = BackgroundTask.query.filter_by(username=username).first()
         test_table = TestTable.query.filter_by(username=username).first()
         
         if not test_table:
@@ -77,15 +77,15 @@ def run_task_with_context(app, username, task_function, request_data):
             task_function(request_data)
             
             # Update both tables after task completion
-            test_thread.processing = False
-            test_thread.result = "Task completed successfully"
+            background_task.processing = False
+            background_task.result = "Task completed successfully"
             db.session.commit()
 
             print(f"Processing completed for user {username}")
 
         except Exception as e:
             print(f"Error during processing for user {username}: {e}")
-            test_thread.processing = False
+            background_task.processing = False
             db.session.commit()
 
 @api_bp.route('/threadingtest', methods=['POST'])
@@ -114,18 +114,18 @@ def main_function(request_data):
 @api_bp.route('/threadingtest/status/<username>', methods=['GET'])
 def get_task_status(username):
     try:
-        test_thread = TestThreading.query.filter_by(username=username).first()
+        background_task = BackgroundTask.query.filter_by(username=username).first()
         test_table = TestTable.query.filter_by(username=username).first()
         
-        if not test_thread or not test_table:
+        if not background_task or not test_table:
             return jsonify({
                 'status': 'error',
                 'message': 'No task found for this user'
             }), 404
             
         return jsonify({
-            'processing': test_thread.processing,
-            'result': test_thread.result,
+            'processing': background_task.processing,
+            'result': background_task.result,
             'processing_table': test_table.processing,
             'result_table': test_table.result
         })
