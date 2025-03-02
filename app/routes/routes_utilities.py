@@ -50,17 +50,12 @@ def set_processing(f):
 @set_processing
 def Image_to_CSV():
     try:
-        start_time = time.time()
+
         user_id = request.args.get('user_id')
         
         # You can remove the manual processing=True setting since the decorator handles it
-        test_table = TestTable.query.filter_by(username=user_id).first()
+
         
-        if not test_table:
-            test_table = TestTable(username=user_id, processing=False)
-            db.session.add(test_table)
-        
-        db.session.commit()
         
         # Start the background process
         app = current_app._get_current_object()
@@ -108,6 +103,9 @@ def long_running_task(app, username, request):
         test_thread = TestThreading.query.filter_by(username=username).first()
         test_table = TestTable.query.filter_by(username=username).first()
         
+        if not test_table:
+            test_table = TestTable(username=username, processing=False)
+            db.session.add(test_table)
         if not test_thread or not test_table:
             print(f"Required entries for user {username} not found.")
             return
