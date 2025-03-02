@@ -89,3 +89,17 @@ class CampaignContent(db.Model):
     tone = db.Column(db.String(50), nullable=True)
     setting = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class TestThreading(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), ForeignKey('user.username'), nullable=False)
+    processing = db.Column(db.Boolean, default=False)
+    result = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class TestTable(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), ForeignKey('user.username'), nullable=False)
+    processing = db.Column(db.Boolean, default=False)
+    result = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
