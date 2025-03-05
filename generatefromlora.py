@@ -12,11 +12,11 @@ def generate_character_art(api_key):
     "modelId": "aa77f04e-3eec-4034-9c07-d0f619684628",  
     "num_images": 4,  
     "presetStyle": "DYNAMIC",  
-    "prompt": "A dog stock photo looking happily at the camera",  
+    "prompt": "generate a topdown view of a dnd map, it must be a top down view looking directly down, generate the interior of a cave",  
     "width": 1024,  
     "userElements": [  
         {  
-            "userLoraId": "23890",  
+            "userLoraId": 23890,  
             "weight": 1  
         }  
     ]  

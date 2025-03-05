@@ -1,61 +1,76 @@
-from functools import wraps
+from flask import request, jsonify, current_app
 import threading
-from flask import current_app
-from typing import Callable, Any
-from ..models import db
+import uuid
+from app.models import db
+from app.models.user import BackgroundTask, TestTable
 
-def run_in_background(f: Callable[..., Any]) -> Callable[..., Any]:
-    """
-    A decorator that runs the decorated function in a background thread.
-    The decorated function must be used within a Flask application context.
-    
-    Usage:
-    @run_in_background
-    def my_long_running_task(app, *args, **kwargs):
-        with app.app_context():
-            # Your long running code here
-            pass
-    """
-    @wraps(f)
+
+def set_processing(f):
     def wrapper(*args, **kwargs):
-        app = current_app._get_current_object()
-        thread = threading.Thread(target=f, args=(app,) + args, kwargs=kwargs)
-        thread.daemon = True  # Daemonize thread to allow app to exit
-        thread.start()
-        return thread
+        try:
+            user_id = request.args.get('user_id')
+            task_id = str(uuid.uuid4())  # Generate unique task ID
+            
+            # Create new BackgroundTask instance for this specific task
+            background_task = BackgroundTask(
+                username=user_id,
+                task_id=task_id,
+                processing=True
+            )
+            db.session.add(background_task)
+            db.session.commit()
+            
+            # Extract all needed data from request
+            request_data = {
+                'user_id': user_id,
+                'task_id': task_id,  # Pass task_id to the background process
+                'args': dict(request.args),
+                'form': dict(request.form),
+                'json': request.get_json(silent=True)
+            }
+            
+            # Start the background process
+            app = current_app._get_current_object()
+            thread = threading.Thread(
+                target=run_task_with_context,
+                args=(app, user_id, task_id, f, request_data)
+            )
+            thread.start()
+            
+            return jsonify({
+                'message': 'Processing started',
+                'task_id': task_id  # Return task_id to client for status checking
+            }), 202
+            
+        except Exception as e:
+            print(f"Error in processing decorator: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+            
+    wrapper.__name__ = f.__name__
     return wrapper
 
-def update_task_status(user_id: str, status: bool) -> None:
-    """
-    Update the processing status for a user in the database.
-    
-    Args:
-        user_id: The ID or username of the user
-        status: The processing status to set (True/False)
-    """
-    from ..models.user import User  # Import here to avoid circular imports
-    
-    try:
-        user = User.query.filter_by(username=user_id).first()
-        if user:
-            user.processing = status
+def run_task_with_context(app, username, task_id, task_function, request_data):
+    with app.app_context():
+        background_task = BackgroundTask.query.filter_by(task_id=task_id).first()
+        test_table = TestTable.query.filter_by(username=username).first()
+        
+        if not test_table:
+            test_table = TestTable(username=username, processing=False)
+            db.session.add(test_table)
             db.session.commit()
-    except Exception as e:
-        print(f"Error updating task status: {e}")
-        db.session.rollback()
 
-def with_app_context(f: Callable[..., Any]) -> Callable[..., Any]:
-    """
-    A decorator that ensures the function runs within the Flask application context.
-    
-    Usage:
-    @with_app_context
-    def my_db_function(*args, **kwargs):
-        # Your database operations here
-        pass
-    """
-    @wraps(f)
-    def wrapper(app, *args, **kwargs):
-        with app.app_context():
-            return f(*args, **kwargs)
-    return wrapper 
+        try:
+            # Run the actual task function
+            task_function(request_data)
+            
+            # Update both tables after task completion
+            background_task.processing = False
+            background_task.result = "Task completed successfully"
+            db.session.commit()
+
+            print(f"Processing completed for user {username}")
+
+        except Exception as e:
+            print(f"Error during processing for user {username}: {e}")
+            background_task.processing = False
+            db.session.commit()
