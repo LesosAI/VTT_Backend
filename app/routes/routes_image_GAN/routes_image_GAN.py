@@ -5,7 +5,6 @@ from datetime import datetime
 from PIL import Image, ImageDraw
 import io
 import time
-from ...utils.background_tasks import run_in_background, with_app_context, update_task_status
 
 api_image_GAN = Blueprint("api_image_GAN", __name__, url_prefix="/api")
 
