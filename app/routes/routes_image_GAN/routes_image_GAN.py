@@ -27,8 +27,8 @@ def generate_image():
     if not api_key:
         return jsonify({'error': 'Leonardo API key not configured'}), 500
 
-    # Generate image using Leonardo AI
-    image_urls = generate_character_art(api_key)
+    # Generate image using Leonardo AI with the description
+    image_urls = generate_character_art(api_key, description)
     if not image_urls:
         return jsonify({'error': 'Failed to generate image'}), 500
 

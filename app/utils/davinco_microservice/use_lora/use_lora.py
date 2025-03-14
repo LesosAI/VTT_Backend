@@ -2,20 +2,27 @@ import requests
 import json
 import time
 
-def generate_character_art(api_key):
+def generate_character_art(api_key, description=""):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
+    
+    # Construct the prompt using the provided description
+    base_prompt = f"Generate character artwork based on this description: {description}. "
+    style_prompt = "High quality, detailed character design, concept art style, fantasy art"
+    
+    # Combine prompts
+    full_prompt = base_prompt + style_prompt
     
     # Request payload
     payload = {
         "modelId": "6b645e3a-d64f-4341-a6d8-7a3690fbf042",  # Phoenix 0.9 model
-        "prompt": "full body character portrait of a fantasy warrior, detailed character design, concept art style",
+        "prompt": full_prompt,
         "num_images": 1,
         "width": 1472,
         "height": 832,
         "contrast": 3.5,
         "alchemy": True,  # Quality mode
         "styleUUID": "33abbb99-03b9-4dd7-9761-ee98650b2c88",  # Cinematic Concept style
-        "enhancePrompt": False
+        "enhancePrompt": False  # Enable prompt enhancement for better results
     }
     
     headers = {
