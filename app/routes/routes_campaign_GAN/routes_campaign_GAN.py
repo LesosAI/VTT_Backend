@@ -47,15 +47,21 @@ def generate_campaign_content(campaign_id):
     if campaign.username != data['username']:
         return jsonify({'error': 'Unauthorized'}), 403
     
-    # Create a prompt using the provided description and parameters
+    # Get previous content for context
+    previous_contents = CampaignContent.query.filter_by(campaign_id=campaign_id).order_by(CampaignContent.created_at.asc()).all()
+    context = "\n\nPrevious campaign content:\n"
+    for prev in previous_contents:
+        context += f"- {prev.description}: {prev.content}\n"
+    
+    # Create a prompt using the provided description, parameters, and previous content
     prompt = f"""Generate campaign content for a tabletop RPG with the following parameters:
 Genre: {data.get('genre', 'fantasy')}
 Tone: {data.get('tone', 'serious')}
 Setting: {data.get('setting', 'medieval')}
 
 Request: {data.get('description')}
-
-Please provide detailed and creative content that fits these parameters."""
+{context if previous_contents else ''}
+Please provide detailed and creative content that fits these parameters and maintains consistency with any previous content."""
 
     # Generate content using the LLM
     generated_content = generate_text(prompt)
