@@ -5,6 +5,8 @@ from datetime import datetime
 from PIL import Image, ImageDraw
 import io
 import time
+import os
+from app.utils.davinco_microservice.use_lora.use_lora import generate_character_art
 
 api_image_GAN = Blueprint("api_image_GAN", __name__, url_prefix="/api")
 
@@ -15,15 +17,23 @@ def generate_image():
     description = data.get('description')
     style = data.get('style')
     gender = data.get('gender')
-    tags = data.get('tags', [])  # Get tags from request
+    tags = data.get('tags', [])
     
     if not username:
         return jsonify({'error': 'Username is required'}), 400
-        
-    # For now, we'll use Picsum as a placeholder
-    # In a real implementation, you'd integrate with your actual image generation service
-    image_url = f"https://picsum.photos/800/600"
-    
+
+    # Get Leonardo API key from environment
+    api_key = os.getenv('LEONARDO_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'Leonardo API key not configured'}), 500
+
+    # Generate image using Leonardo AI
+    image_urls = generate_character_art(api_key)
+    if not image_urls:
+        return jsonify({'error': 'Failed to generate image'}), 500
+
+    image_url = image_urls[0]  # Take the first generated image
+    print(image_url)
     # Create new character art entry
     character_art = CharacterArt(
         username=username,
