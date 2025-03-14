@@ -1,8 +1,10 @@
 from flask import Blueprint, request, jsonify
 from app.models.user import Campaign, CampaignContent, CharacterArt, Map, db
 from datetime import datetime
+from app.utils.llm_for_text import generate_text
 
 api_campaign_GAN = Blueprint("api_campaign_GAN", __name__, url_prefix="/api")
+
 
 @api_campaign_GAN.route('/campaigns/<username>', methods=['GET'])
 def get_campaigns(username):
@@ -45,13 +47,26 @@ def generate_campaign_content(campaign_id):
     if campaign.username != data['username']:
         return jsonify({'error': 'Unauthorized'}), 403
     
-    # Generate lorem ipsum text
-    lorem_ipsum = """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem."""
+    # Create a prompt using the provided description and parameters
+    prompt = f"""Generate campaign content for a tabletop RPG with the following parameters:
+Genre: {data.get('genre', 'fantasy')}
+Tone: {data.get('tone', 'serious')}
+Setting: {data.get('setting', 'medieval')}
+
+Request: {data.get('description')}
+
+Please provide detailed and creative content that fits these parameters."""
+
+    # Generate content using the LLM
+    generated_content = generate_text(prompt)
+    
+    if not generated_content:
+        return jsonify({'error': 'Failed to generate content'}), 500
     
     # Save the generated content with all fields
     content = CampaignContent(
         campaign_id=campaign_id,
-        content=lorem_ipsum,
+        content=generated_content,
         description=data.get('description'),
         genre=data.get('genre'),
         tone=data.get('tone'),
