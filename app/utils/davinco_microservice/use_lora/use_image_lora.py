@@ -2,8 +2,16 @@ import requests
 import json
 import time
 
-def generate_map_art(api_key):
+def generate_map_art(api_key, description=""):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
+    
+    # Construct the prompt using the provided description
+    base_prompt = f"Generate a top-down view D&D map based on this description: {description}. "
+    style_prompt = "The map should include clear details of terrain, landmarks, and structures. High quality, detailed cartography style"
+    view_prompt = "Must be a perfect top-down view looking directly down at the map"
+    
+    # Combine prompts
+    full_prompt = f"{base_prompt} {style_prompt} {view_prompt}"
     
     # Request payload
     payload = {  
@@ -12,7 +20,7 @@ def generate_map_art(api_key):
         "modelId": "aa77f04e-3eec-4034-9c07-d0f619684628",  
         "num_images": 4,  
         "presetStyle": "DYNAMIC",  
-        "prompt": "generate a topdown view of a dnd map, it must be a top down view looking directly down, generate the interior of a cave",  
+        "prompt": full_prompt,  
         "width": 1024,  
         "userElements": [  
             {  
