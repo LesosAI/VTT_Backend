@@ -4,9 +4,12 @@ import requests
 from datetime import datetime
 from PIL import Image, ImageDraw
 import io
-
+from app.utils.davinco_microservice.use_lora.use_image_lora import generate_map_art
+import os
+from dotenv import load_dotenv
 api_map_GAN = Blueprint("api_map_GAN", __name__, url_prefix="/api")
 
+load_dotenv()
 @api_map_GAN.route('/generate-map', methods=['POST'])
 def generate_map():
     data = request.json
@@ -17,10 +20,15 @@ def generate_map():
     
     if not username:
         return jsonify({'error': 'Username is required'}), 400
-        
-    # For now, using Picsum as a placeholder
-    # In production, integrate with your map generation service
-    image_url = f"https://picsum.photos/800/600"
+    
+    # Generate map using Leonardo AI
+    api_key = os.getenv('LEONARDO_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'Leonardo API key not configured'}), 500
+    image_url = generate_map_art(api_key)
+    
+    if not image_url:
+        return jsonify({'error': 'Failed to generate map'}), 500
     
     # Create new map entry
     map_entry = Map(
