@@ -3,7 +3,7 @@ from openai import OpenAI
 import os
 
 
-def generate_text(prompt, model="gpt-4o-2024-05-13"):
+def generate_text(prompt, model="gpt-4o"):
     # Load environment variables from .env file
     load_dotenv()
 
