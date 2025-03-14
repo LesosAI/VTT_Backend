@@ -45,14 +45,13 @@ def generate_campaign_content(campaign_id):
     if campaign.username != data['username']:
         return jsonify({'error': 'Unauthorized'}), 403
     
-    # Here you would call your text generation service
-    # For now, let's just create a placeholder
-    generated_text = f"Generated content for {campaign.name} in {data['genre']} style..."
+    # Generate lorem ipsum text
+    lorem_ipsum = """Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem."""
     
     # Save the generated content with all fields
     content = CampaignContent(
         campaign_id=campaign_id,
-        content=generated_text,
+        content=lorem_ipsum,
         description=data.get('description'),
         genre=data.get('genre'),
         tone=data.get('tone'),
@@ -114,18 +113,51 @@ def update_campaign(campaign_id):
         'created_at': str(campaign.created_at)
     })
 
+@api_campaign_GAN.route('/campaigns/<int:campaign_id>/content/<int:content_id>', methods=['DELETE'])
+def delete_campaign_content(campaign_id, content_id):
+    content = CampaignContent.query.filter_by(id=content_id, campaign_id=campaign_id).first_or_404()
+    
+    # Verify user owns this campaign
+    campaign = Campaign.query.get(campaign_id)
+    if not campaign:
+        return jsonify({'error': 'Campaign not found'}), 404
+        
+    if campaign.username != request.json.get('username'):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    db.session.delete(content)
+    db.session.commit()
+    
+    return jsonify({'message': 'Content deleted successfully'})
+
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/content/<int:content_id>', methods=['PUT'])
 def update_campaign_content(campaign_id, content_id):
     data = request.json
     content = CampaignContent.query.filter_by(id=content_id, campaign_id=campaign_id).first_or_404()
     
-    # Update description
-    content.description = data.get('description')
+    # Verify user owns this campaign
+    campaign = Campaign.query.get(campaign_id)
+    if not campaign:
+        return jsonify({'error': 'Campaign not found'}), 404
+        
+    if campaign.username != data.get('username'):
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    # Update all fields
+    content.description = data.get('description', content.description)
+    content.genre = data.get('genre', content.genre)
+    content.tone = data.get('tone', content.tone)
+    content.setting = data.get('setting', content.setting)
+    content.content = data.get('content', content.content)
+    
     db.session.commit()
     
     return jsonify({
         'id': content.id,
         'content': content.content,
         'description': content.description,
+        'genre': content.genre,
+        'tone': content.tone,
+        'setting': content.setting,
         'created_at': str(content.created_at)
     })
