@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 from app.models import db
-from app.models.user import User
+from app.models.user import User, Plan
 import jwt
 from datetime import datetime, timedelta
 
@@ -132,3 +132,23 @@ def change_password():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+@api_login.route('/check-permissions', methods=['GET'])
+def check_permissions():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({"error": "Username is required"}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Check if user has an active subscription
+    has_game_master = False
+    if user.subscription and user.subscription.status == 'active':
+        plan = Plan.query.get(user.subscription.plan_id)
+        has_game_master = plan and "Game Master" in plan.name
+
+    return jsonify({
+        "has_game_master": has_game_master
+    }), 200
