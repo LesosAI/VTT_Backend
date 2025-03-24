@@ -34,8 +34,8 @@ def initialize_plans():
         {
             "name": "Game Master Monthly",
             "description": "Full access to all Game Master features",
-            "price": 9.00,
-            "stripe_price_id": "price_1QijlK02khdf3R0AN2aXLQJP",
+            "price": 12.00,
+            "stripe_price_id": "price_1R64E502khdf3R0A1tvUHNbt",
             "interval": "month",
             "usage_limit": None  # Unlimited usage
         },
@@ -43,7 +43,7 @@ def initialize_plans():
             "name": "Game Master Yearly",
             "description": "Full access to all Game Master features",
             "price": 108.00,  # Save by paying yearly
-            "stripe_price_id": "price_1QijlK02khdf3R0AMM6ohbah",
+            "stripe_price_id": "price_1R64E502khdf3R0AbLwQdeAA",
             "interval": "year",
             "usage_limit": None  # Unlimited usage
         },
