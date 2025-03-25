@@ -7,8 +7,81 @@ import io
 import time
 import os
 from app.utils.davinco_microservice.use_lora.use_lora import generate_character_art
-
+from app.utils.llm_for_text import generate_text
 api_image_GAN = Blueprint("api_image_GAN", __name__, url_prefix="/api")
+
+
+
+def generate_prompt_fantasy(description):
+    example_prompts = """
+    
+    Prompt 1:       
+
+Create an image of a serene monk exuding an aura of tranquility, yet possessing the ability to control the winds with a mere gesture. The monk's robes billow around him as if caught in a perpetual breeze, emphasizing his connection to the element of air. His eyes are closed in deep concentration, with wisps of wind swirling around his outstretched hand. In the background, a mystical temple shrouded in mist and surrounded by ancient trees adds an air of mystery and magic to the scene.
+
+    Prompt 2:
+
+Create an image of a cool monk in a fantasy setting, exuding an aura of mysticism and wisdom. The monk is dressed in flowing robes adorned with intricate patterns, and is holding a staff with a glowing crystal at the top. His eyes are sharp and focused, hinting at hidden knowledge and power. The background is a misty forest filled with ancient trees and magical creatures, with shafts of golden light filtering through the canopy above, creating an atmosphere of enchantment and tranquility
+
+    Prompt 3:
+    
+Create an image of an albino assassin in a fantasy world, with pale skin, white hair, and piercing red eyes. The assassin is dressed in sleek, black leather armor, adorned with intricate silver patterns. They are holding a deadly, curved blade with a glowing blue gem embedded in the hilt. The background is a shadowy alleyway, illuminated by the soft glow of a distant street lamp, casting long, ominous shadows.
+        
+    """
+    prompt = f"Generate a prompt for a fantasy character based on this description: {description}. Use the following examples as a reference: {example_prompts}"
+    prompt = generate_text(prompt)
+    return prompt
+
+def generate_prompt_scifi(description):
+    example_prompts = """
+    Prompt 1:       
+
+Create an image of a stoic and battle-hardened Librarian of the Blood Angels chapter, emanating an aura of psychic dominance and war-forged wisdom. His crimson power armor, adorned with glowing gold runes of protection, stands as a testament to his mastery of the arcane arts. His psychic hood hums faintly with suppressed energy, while his gaunt face, etched with deep scars, reveals cold, unyielding eyes that glow with sapphire light. The air around him shimmers with latent psychic power, distorting the space near his outstretched hand. In the background, a war-ravaged cathedral with shattered stained glass and flickering braziers evokes a sense of grim reverence and somber resolve.
+
+Negative Prompts:
+
+No casual modern clothing
+
+No anime or cartoonish features
+
+No neon cyberpunk elements
+
+No superhero-style stances
+
+    Prompt 2:
+
+Create an image of a relentless and unyielding Inquisitor, draped in a heavy, dark leather coat lined with iron clasps and reinforced plates. His steely gaze pierces through the gloom, cold and calculating. A silver-topped staff, engraved with intricate sigils of purity, crackles faintly with divine energy as he channels his unshakable will. Chains bearing the emblems of the Emperor drape across his chest, while a battered tome of forbidden knowledge hangs from his belt. The scorched ruins of a heretic temple smolder behind him, embers dancing in the air like fleeting spirits of the damned.
+
+Negative Prompts:
+
+No casual modern clothing
+
+No anime or cartoonish features
+
+No neon cyberpunk elements
+
+No superhero-style stances
+
+    Prompt 3:
+    
+Create an image of a solemn Battle Priest, clad in fur-lined armor crusted with frost and rimed with ice. His long, silver beard flows beneath a heavy hood embroidered with symbols of sacred power. In his gloved hands, he wields an ancient warhammer, its head sculpted like a snarling wolf, crackling with frozen energy. Cold mist curls around his boots as the frozen wind howls through a desolate mountain pass behind him. His calm, resolute expression suggests a spirit forged in hardship and tempered by unwavering faith.
+
+Negative Prompts:
+
+No casual modern clothing
+
+No anime or cartoonish features
+
+No neon cyberpunk elements
+
+No superhero-style stances
+    
+    
+    """
+    prompt = f"Generate a prompt for a scifi character based on this description: {description}. Use the following examples as a reference: {example_prompts}"
+    prompt = generate_text(prompt)
+    return prompt
+
 
 @api_image_GAN.route('/generate-image', methods=['POST'])
 def generate_image():
@@ -16,8 +89,7 @@ def generate_image():
     username = data.get('username')
     description = data.get('description')
     style = data.get('style')
-    gender = data.get('gender')
-    tags = data.get('tags', [])
+
     
     if not username:
         return jsonify({'error': 'Username is required'}), 400
@@ -27,8 +99,16 @@ def generate_image():
     if not api_key:
         return jsonify({'error': 'Leonardo API key not configured'}), 500
 
+    if style == "fantasy":
+        prompt = generate_prompt_fantasy(description)
+    elif style == "scifi":
+        prompt = generate_prompt_scifi(description)
+    else:
+        prompt = description
+    print(prompt)
+
     # Generate image using Leonardo AI with the description
-    image_urls = generate_character_art(api_key, description)
+    image_urls = generate_character_art(api_key, prompt)
     if not image_urls:
         return jsonify({'error': 'Failed to generate image'}), 500
 
