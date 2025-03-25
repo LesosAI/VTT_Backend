@@ -47,21 +47,28 @@ def generate_campaign_content(campaign_id):
     if campaign.username != data['username']:
         return jsonify({'error': 'Unauthorized'}), 403
     
-    # Get previous content for context
-    previous_contents = CampaignContent.query.filter_by(campaign_id=campaign_id).order_by(CampaignContent.created_at.asc()).all()
-    context = "\n\nPrevious campaign content:\n"
-    for prev in previous_contents:
-        context += f"- {prev.description}: {prev.content}\n"
+    # Get only the selected content for context
+    selected_content_ids = data.get('selectedContentIds', [])
+    selected_contents = CampaignContent.query\
+        .filter(CampaignContent.id.in_(selected_content_ids))\
+        .filter_by(campaign_id=campaign_id)\
+        .order_by(CampaignContent.created_at.asc())\
+        .all()
     
-    # Create a prompt using the provided description, parameters, and previous content
+    # Build context only from selected contents
+    context = "\n\nSelected campaign context:\n" if selected_contents else ""
+    for content in selected_contents:
+        context += f"- {content.description}: {content.content}\n"
+    print(context)
+    # Create a prompt using the provided description, parameters, and selected content
     prompt = f"""Generate campaign content for a tabletop RPG with the following parameters:
 Genre: {data.get('genre', 'fantasy')}
 Tone: {data.get('tone', 'serious')}
 Setting: {data.get('setting', 'medieval')}
 
 Request: {data.get('description')}
-{context if previous_contents else ''}
-Please provide detailed and creative content that fits these parameters and maintains consistency with any previous content."""
+{context}
+Please provide detailed and creative content that fits these parameters and maintains consistency with any provided context."""
 
     # Generate content using the LLM
     generated_content = generate_text(prompt)
