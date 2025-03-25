@@ -90,7 +90,7 @@ def generate_image():
     description = data.get('description')
     style = data.get('style')
 
-    
+    print(style)
     if not username:
         return jsonify({'error': 'Username is required'}), 400
 
@@ -101,7 +101,7 @@ def generate_image():
 
     if style == "fantasy":
         prompt = generate_prompt_fantasy(description)
-    elif style == "scifi":
+    elif style == "sci-fi":
         prompt = generate_prompt_scifi(description)
     else:
         prompt = description
