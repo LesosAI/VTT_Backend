@@ -120,16 +120,12 @@ def generate_image():
         image_url=image_url,
         description=description,
         style=style,
-        gender=gender
     )
     
     try:
         db.session.add(character_art)
         
         # Add tags
-        for tag_name in tags:
-            tag = Tag(name=tag_name, character=character_art)
-            db.session.add(tag)
             
         db.session.commit()
         

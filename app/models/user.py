@@ -54,7 +54,6 @@ class CharacterArt(db.Model):
     image_url = db.Column(db.String(500), nullable=False)
     description = db.Column(db.Text, nullable=True)
     style = db.Column(db.String(50), nullable=True)
-    gender = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     tags = db.relationship('Tag', backref='character', cascade='all, delete-orphan')
 
