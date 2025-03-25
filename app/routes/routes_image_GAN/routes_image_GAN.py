@@ -152,7 +152,6 @@ def get_character_history(username):
                 'image_url': char.image_url,
                 'description': char.description,
                 'style': char.style,
-                'gender': char.gender,
                 'created_at': char.created_at.isoformat(),
                 'tags': [tag.name for tag in char.tags]
             } for char in characters]
@@ -174,7 +173,6 @@ def get_character(character_id):
                 'image_url': character.image_url,
                 'description': character.description,
                 'style': character.style,
-                'gender': character.gender,
                 'created_at': character.created_at.isoformat(),
                 'tags': [tag.name for tag in character.tags]  # Add tags to response
             }
