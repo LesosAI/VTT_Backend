@@ -6,17 +6,21 @@ def generate_character_art(api_key, description=""):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
     
     # Construct the prompt using the provided description
-
-    description = "Create an image of an albino assassin in a fantasy world, with pale skin, white hair, and piercing red eyes. The assassin is dressed in sleek, black leather armor, adorned with intricate silver patterns. They are holding a deadly, curved blade with a glowing blue gem embedded in the hilt. The background is a shadowy alleyway, illuminated by the soft glow of a distant street lamp, casting long, ominous shadows."
+    base_prompt = f"Generate character artwork based on this description: {description}. "
+    style_prompt = "High quality, detailed character design, concept art style, fantasy art"
+    
+    # Combine prompts
+    full_prompt = base_prompt + style_prompt
+    # full_prompt = "Create an image of a cool monk in a fantasy setting, exuding an aura of mysticism and wisdom. The monk is dressed in flowing robes adorned with intricate patterns, and is holding a staff with a glowing crystal at the top. His eyes are sharp and focused, hinting at hidden knowledge and power. The background is a misty forest filled with ancient trees and magical creatures, with shafts of golden light filtering through the canopy above, creating an atmosphere of enchantment and tranquility."
     # Request payload
     payload = {
         "modelId": "6b645e3a-d64f-4341-a6d8-7a3690fbf042",  # Phoenix 0.9 model
-        "prompt": description,
+        "prompt": full_prompt,
         "num_images": 1,
-        "width": 1344,
-        "height": 1344,
+        "width": 1472,
+        "height": 832,
         "alchemy": True,  # Quality mode
-        "enhancePrompt": False,  # Enable prompt enhancement for better results
+        "enhancePrompt": False  # Enable prompt enhancement for better results
     }
     
     headers = {
@@ -69,7 +73,8 @@ def generate_character_art(api_key, description=""):
 # Usage example
 if __name__ == "__main__":
     api_key = "fab16a02-e482-4a89-a8cf-01397b4070de"  # Replace with your actual API key
-    full_prompt = "Create an image of an albino assassin in a fantasy world, with pale skin, white hair, and piercing red eyes. The assassin is dressed in sleek, black leather armor, adorned with intricate silver patterns. They are holding a deadly, curved blade with a glowing blue gem embedded in the hilt. The background is a shadowy alleyway, illuminated by the soft glow of a distant street lamp, casting long, ominous shadows."
+    full_prompt = "Create an image of a cool monk in a fantasy setting, exuding an aura of mysticism and wisdom. The monk is dressed in flowing robes adorned with intricate patterns, and is holding a staff with a glowing crystal at the top. His eyes are sharp and focused, hinting at hidden knowledge and power. The background is a misty forest filled with ancient trees and magical creatures, with shafts of golden light filtering through the canopy above, creating an atmosphere of enchantment and tranquility."
+
     result = generate_character_art(api_key, full_prompt)
     if result:
         print("\nGenerated Image URLs:")
