@@ -7,7 +7,7 @@ def generate_map_art(api_key, description=""):
     
     # Construct the prompt using the provided description
     base_prompt = f"Generate a top-down view D&D map based on this description: {description}. "
-    style_prompt = "The map should include clear details of terrain, landmarks, and structures. High quality, detailed cartography style"
+    style_prompt = "The map should include clear details of terrain, landmarks, and structures. High quality, detailed cartography style. DO NOT INCLUDE GRID LINES"
     view_prompt = "Must be a perfect top-down view looking directly down at the map"
     
     # Combine prompts

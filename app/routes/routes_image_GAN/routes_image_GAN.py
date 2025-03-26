@@ -28,7 +28,9 @@ Create an image of a cool monk in a fantasy setting, exuding an aura of mysticis
 Create an image of an albino assassin in a fantasy world, with pale skin, white hair, and piercing red eyes. The assassin is dressed in sleek, black leather armor, adorned with intricate silver patterns. They are holding a deadly, curved blade with a glowing blue gem embedded in the hilt. The background is a shadowy alleyway, illuminated by the soft glow of a distant street lamp, casting long, ominous shadows.
         
     """
-    prompt = f"Generate a prompt for a fantasy character based on this description: {description}. Use the following examples as a reference: {example_prompts}"
+    general_instructions = "must be a fantasy character, with the correct number of limbs, and the correct number of eyes"
+
+    prompt = f"Generate a prompt for a fantasy character based on this description: {description}. Please use the following general instructions: {general_instructions}. Use the following examples as a reference: {example_prompts}"
     prompt = generate_text(prompt)
     return prompt
 
@@ -37,6 +39,10 @@ def generate_prompt_scifi(description):
     Prompt 1:       
 
 Create an image of a stoic and battle-hardened Librarian of the Blood Angels chapter, emanating an aura of psychic dominance and war-forged wisdom. His crimson power armor, adorned with glowing gold runes of protection, stands as a testament to his mastery of the arcane arts. His psychic hood hums faintly with suppressed energy, while his gaunt face, etched with deep scars, reveals cold, unyielding eyes that glow with sapphire light. The air around him shimmers with latent psychic power, distorting the space near his outstretched hand. In the background, a war-ravaged cathedral with shattered stained glass and flickering braziers evokes a sense of grim reverence and somber resolve.
+
+Inspired by the setting of Warhammer 40k
+
+must be a sci fi character
 
 Negative Prompts:
 
@@ -52,6 +58,10 @@ No superhero-style stances
 
 Create an image of a relentless and unyielding Inquisitor, draped in a heavy, dark leather coat lined with iron clasps and reinforced plates. His steely gaze pierces through the gloom, cold and calculating. A silver-topped staff, engraved with intricate sigils of purity, crackles faintly with divine energy as he channels his unshakable will. Chains bearing the emblems of the Emperor drape across his chest, while a battered tome of forbidden knowledge hangs from his belt. The scorched ruins of a heretic temple smolder behind him, embers dancing in the air like fleeting spirits of the damned.
 
+Inspired by the setting of Warhammer 40k
+
+must be a sci fi character
+
 Negative Prompts:
 
 No casual modern clothing
@@ -66,6 +76,10 @@ No superhero-style stances
     
 Create an image of a solemn Battle Priest, clad in fur-lined armor crusted with frost and rimed with ice. His long, silver beard flows beneath a heavy hood embroidered with symbols of sacred power. In his gloved hands, he wields an ancient warhammer, its head sculpted like a snarling wolf, crackling with frozen energy. Cold mist curls around his boots as the frozen wind howls through a desolate mountain pass behind him. His calm, resolute expression suggests a spirit forged in hardship and tempered by unwavering faith.
 
+Inspired by the setting of Warhammer 40k
+
+must be a sci fi character
+
 Negative Prompts:
 
 No casual modern clothing
@@ -77,6 +91,7 @@ No neon cyberpunk elements
 No superhero-style stances
     
     
+EACH PROMPT GENERATION MUST INCLUDE INSPIRED BY THE SETTING OF WARHAMMER 40K
     """
     prompt = f"Generate a prompt for a scifi character based on this description: {description}. Use the following examples as a reference: {example_prompts}"
     prompt = generate_text(prompt)
