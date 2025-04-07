@@ -83,6 +83,7 @@ class CampaignContent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     campaign_id = db.Column(db.Integer, ForeignKey('campaign.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    content_category = db.Column(db.Text, nullable=True)  # Storing Category
     description = db.Column(db.Text, nullable=True)
     genre = db.Column(db.String(50), nullable=True)
     tone = db.Column(db.String(50), nullable=True)
