@@ -100,6 +100,55 @@ def generate_campaign_content(campaign_id):
         'created_at': str(content.created_at)
     })
 
+@api_campaign_GAN.route('campaigns/<int:campaign_id>/regenerate/<int:content_id>', methods=['POST'])
+def regenerate_campaign_content(campaign_id, content_id):
+    data = request.json
+    campaign = Campaign.query.get_or_404(campaign_id)
+    user_prompt = data.get('promptInput')
+    
+    # Verify user owns this campaign
+    if campaign.username != data['username']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    if not user_prompt:
+        return jsonify({"error": "Prompt is required"}), 400
+    
+    # Get original content from DB
+    content = CampaignContent.query.filter_by(id=content_id, campaign_id=campaign_id).first_or_404()
+    if not content:
+        return jsonify({"error": "Content not found"}), 404
+    
+    final_prompt = (
+        f"Original content:\n{content.content}\n\n"
+        f"User wants to regenerate it with this instruction:\n{user_prompt}\n\n"
+        f"Please regenerate the creative content that fits these instruction and maintains consistency accordingly."
+    )
+
+    # Regenerate content using the LLM
+    regenerated_content = generate_text(final_prompt)
+
+    if not regenerated_content:
+        return jsonify({'error': 'Failed to regenerate content'}), 500
+
+    # Update all fields
+    content.content = data.get('content', regenerated_content)
+    content.description = data.get('description', content.description)
+    content.genre = data.get('genre', content.genre)
+    content.tone = data.get('tone', content.tone)
+    content.setting = data.get('setting', content.setting)
+
+    db.session.commit()
+
+    return jsonify({
+        'id': content.id,
+        'content': content.content,
+        'description': content.description,
+        'genre': content.genre,
+        'tone': content.tone,
+        'setting': content.setting,
+        'created_at': str(content.created_at)
+    })
+
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/content', methods=['GET'])
 def get_campaign_content(campaign_id):
     contents = CampaignContent.query.filter_by(campaign_id=campaign_id).order_by(CampaignContent.created_at.desc()).all()
