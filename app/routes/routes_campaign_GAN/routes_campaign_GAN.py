@@ -62,13 +62,13 @@ def generate_campaign_content(campaign_id):
     print(context)
     # Create a prompt using the provided description, parameters, and selected content
     prompt = f"""Generate campaign content for a tabletop RPG with the following parameters:
-Genre: {data.get('genre', 'fantasy')}
-Tone: {data.get('tone', 'serious')}
-Setting: {data.get('setting', 'medieval')}
+    Genre: {data.get('genre', 'fantasy')}
+    Tone: {data.get('tone', 'serious')}
+    Setting: {data.get('setting', 'medieval')}
 
-Request: {data.get('description')}
-{context}
-Please provide detailed and creative content that fits these parameters and maintains consistency with any provided context."""
+    Request: {data.get('description')}
+    {context}
+    Please provide detailed and creative content that fits these parameters and maintains consistency with any provided context."""
 
     # Generate content using the LLM
     generated_content = generate_text(prompt)
@@ -80,6 +80,7 @@ Please provide detailed and creative content that fits these parameters and main
     content = CampaignContent(
         campaign_id=campaign_id,
         content=generated_content,
+        content_category=data.get('content_category'),
         description=data.get('description'),
         genre=data.get('genre'),
         tone=data.get('tone'),
@@ -91,6 +92,7 @@ Please provide detailed and creative content that fits these parameters and main
     return jsonify({
         'id': content.id,
         'content': content.content,
+        'content_category': content.content_category,
         'description': content.description,
         'genre': content.genre,
         'tone': content.tone,
@@ -104,6 +106,7 @@ def get_campaign_content(campaign_id):
     return jsonify([{
         'id': content.id,
         'content': content.content,
+        'content_category': content.content_category,
         'description': content.description,
         'genre': content.genre,
         'tone': content.tone,
