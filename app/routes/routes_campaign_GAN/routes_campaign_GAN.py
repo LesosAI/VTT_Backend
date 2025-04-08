@@ -131,8 +131,8 @@ def regenerate_campaign_content(campaign_id, content_id):
         return jsonify({'error': 'Failed to regenerate content'}), 500
 
     # Update all fields
-    content.content = data.get('content', regenerated_content)
-    content.description = data.get('description', content.description)
+    content.content = regenerated_content
+    content.description = content.description
     content.genre = data.get('genre', content.genre)
     content.tone = data.get('tone', content.tone)
     content.setting = data.get('setting', content.setting)
