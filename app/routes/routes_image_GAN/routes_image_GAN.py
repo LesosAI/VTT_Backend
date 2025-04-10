@@ -17,18 +17,74 @@ def generate_prompt_fantasy(description):
     
     Prompt 1:       
 
-Create an image of a serene monk exuding an aura of tranquility, yet possessing the ability to control the winds with a mere gesture. The monk's robes billow around him as if caught in a perpetual breeze, emphasizing his connection to the element of air. His eyes are closed in deep concentration, with wisps of wind swirling around his outstretched hand. In the background, a mystical temple shrouded in mist and surrounded by ancient trees adds an air of mystery and magic to the scene.
+a tall and weathered guardian standing at the edge of a scorched forest where
+blackened trees meet a smoldering plain. His bare arms are crisscrossed with
+glowing ember-orange runes that pulse faintly beneath cracked, ash-covered
+skin. He wears a mantle of ironwood bark layered over soot-streaked leather
+armor, a massive curved blade slung across his back, still radiating heat from
+recent battle. The sky is dim with drifting smoke, pierced by shafts of amber light
+filtering through the haze. The ground is charred and broken, with embers
+glowing in the crevices, and the air shimmers faintly from residual heat. His
+expression is grim and resolute as he surveys the horizon, smoke curling around
+him like a cloak. Use cinematic perspective with natural camera framing to
+emphasize mood, depth, and detail.
+
 
     Prompt 2:
 
-Create an image of a cool monk in a fantasy setting, exuding an aura of mysticism and wisdom. The monk is dressed in flowing robes adorned with intricate patterns, and is holding a staff with a glowing crystal at the top. His eyes are sharp and focused, hinting at hidden knowledge and power. The background is a misty forest filled with ancient trees and magical creatures, with shafts of golden light filtering through the canopy above, creating an atmosphere of enchantment and tranquility
+Bone-Seer of Hollowmere, a blind oracle standing at the edge of a mist-laden
+swamp beneath a canopy of gnarled, leafless trees. Her face is calm and
+expressionless, with polished bone marbles in place of eyes, faintly etched with
+ancient glyphs. Draped in tattered raven feathers and a shawl of stitched animal
+hides, she clutches a ritual blade carved from ivory and a satchel of jangling
+charm-bones that whisper in the silence. Pale mist coils around her bare feet as
+she walks across a slick wooden platform half-sunken into the muck. Ghostly
+shapes flicker in the fog behind her, drawn by her presence. The lighting is dim
+and cold, filtered through hanging moss and faint moonlight, casting elongated
+shadows across her figure. The texture of damp wood, bone, and feathers
+contrasts with the spectral glow in her hollow gaze. The mood is eerie and
+prophetic, filled with the weight of unseen watchers. Use cinematic perspective
+with natural camera framing to emphasize mood, depth, and detail.
+
 
     Prompt 3:
     
-Create an image of an albino assassin in a fantasy world, with pale skin, white hair, and piercing red eyes. The assassin is dressed in sleek, black leather armor, adorned with intricate silver patterns. They are holding a deadly, curved blade with a glowing blue gem embedded in the hilt. The background is a shadowy alleyway, illuminated by the soft glow of a distant street lamp, casting long, ominous shadows.
-        
+Thornbound Knight, a solemn warrior standing in a fog-choked grove of dying
+trees, his form wrapped in splintered, moss-covered armor dulled by time and
+sorrow. Twisting brambles crown his brow, growing from his skull in a living halo
+of thorns that pierce his flesh, a symbol of his eternal penance. His face is pale
+and resolute, eyes shadowed beneath a battered helm slung to his side. He grips
+a weathered longsword etched with faded holy script, its blade stained by blood
+and sap alike. Golden banners hang torn from his back, trailing into the mist like
+memories of glory. The air is still and damp, filled with the faint scent of rot and
+wet earth, as diffuse silver light breaks through the canopy in shafts that shimmer
+with drifting spores. The ground is soft with fallen leaves and old petals, some
+caught in the brambles growing from his armor. The emotional tone is one of
+quiet suffering and grim nobility. Use cinematic perspective with natural camera
+framing to emphasize mood, depth, and detail.
+
+
+    Prompt 4:
+
+Vulture Alchemist, a hunched and wiry figure skulking through the edge of a
+battlefield at dusk, scavenging among broken weapons and scorched earth. His
+patchwork leather coat is stained with blood and alchemical burns, adorned with
+
+feathers, bones, and stitched sigils. Thick goggles made from polished vulture
+bones magnify his sunken eyes, and a crooked grin stretches beneath a beaked
+mask hanging loosely from his neck. Slung across his back are clinking glass
+vials, bundles of herbs, and a tattered satchel bulging with unholy concoctions.
+He kneels beside a fallen soldier, extracting something glimmering into a vial that
+pulses with sickly green light. The setting sun casts a bruised orange hue over
+the smoke-laced sky, while distant crows wheel and scream overhead. The
+ground is cracked and littered with corpses, alchemical residue, and twitching
+plants fed by unnatural toxins. The air shimmers with volatile fumes, and faint
+sparks dance around his gauntleted hands. The mood is macabre yet
+methodical, steeped in grim curiosity. Use cinematic perspective with natural
+camera framing to emphasize mood, depth, and detail.
+
     """
-    general_instructions = "must be a fantasy character, with the correct number of limbs, and the correct number of eyes"
+    general_instructions = "must be a fantasy character, with the correct number of limbs, and the correct number of eyes, and the correct number of fingers.  ENSURE THE OUTPUT IS BELLOW 250 WORDS, ENSURE THE OUTPUT IS BELLOW 250 WORDS"
 
     prompt = f"Generate a prompt for a fantasy character based on this description: {description}. Please use the following general instructions: {general_instructions}. Use the following examples as a reference: {example_prompts}"
     prompt = generate_text(prompt)
@@ -38,58 +94,65 @@ def generate_prompt_scifi(description):
     example_prompts = """
     Prompt 1:       
 
-Create an image of a stoic and battle-hardened Librarian of the Blood Angels chapter, emanating an aura of psychic dominance and war-forged wisdom. His crimson power armor, adorned with glowing gold runes of protection, stands as a testament to his mastery of the arcane arts. His psychic hood hums faintly with suppressed energy, while his gaunt face, etched with deep scars, reveals cold, unyielding eyes that glow with sapphire light. The air around him shimmers with latent psychic power, distorting the space near his outstretched hand. In the background, a war-ravaged cathedral with shattered stained glass and flickering braziers evokes a sense of grim reverence and somber resolve.
-
-Inspired by the setting of Warhammer 40k
-
-must be a sci fi character
-
-Negative Prompts:
-
-No casual modern clothing
-
-No anime or cartoonish features
-
-No neon cyberpunk elements
-
-No superhero-style stances
+Long-dead figure standing amidst the ruins of a derelict voidship throne room. He
+wears rusted, once-regal golden armor, now corroded and battle-worn, with a
+shattered Aquila emblazoned on his chest—one wing missing, the other
+scorched and twisted. His face is half-decayed, revealing dry bone beneath
+peeling flesh, yet he remains animate, his expression solemn and distant. His
+movements appear glitched and fragmented, as though trapped in overlapping
+timelines, flickering slightly out of sync with reality. He clutches a broken signet
+ring in his right hand, its crest matching the symbol etched onto a crumbling
+Warrant of Trade at his feet. Warp-light spills through a shattered viewing window
+behind him, casting eerie violet and blue hues across the fractured marble floor
+and drifting motes of dust. The air crackles with static interference and residual
+energy, and faint ghost-images of alternate versions of the figure briefly phase
+around him—remnants of fractured time. Set the atmosphere to feel heavy with
+sorrow, grandeur, and haunting decay, evoking a lost legacy corrupted by the
+passage of time and exposure to the warp.
 
     Prompt 2:
 
-Create an image of a relentless and unyielding Inquisitor, draped in a heavy, dark leather coat lined with iron clasps and reinforced plates. His steely gaze pierces through the gloom, cold and calculating. A silver-topped staff, engraved with intricate sigils of purity, crackles faintly with divine energy as he channels his unshakable will. Chains bearing the emblems of the Emperor drape across his chest, while a battered tome of forbidden knowledge hangs from his belt. The scorched ruins of a heretic temple smolder behind him, embers dancing in the air like fleeting spirits of the damned.
-
-Inspired by the setting of Warhammer 40k
-
-must be a sci fi character
-
-Negative Prompts:
-
-No casual modern clothing
-
-No anime or cartoonish features
-
-No neon cyberpunk elements
-
-No superhero-style stances
+A tall, slender Drukhari Archon sits on an elevated throne forged from blackened
+bone and polished metal blades. He wears intricately crafted obsidian-black
+armor with crimson and silver trim, adorned with barbed filigree and etched
+symbols. Spiked pauldrons arc outward with delicate chains draped between
+them, holding trophies like rings and bones. A dark crimson cloak, lined with
+shimmering silk and shifting patterns of screaming faces, cascades down the
+throne steps. His pale, gaunt face has sharp, aristocratic features with crimson
+glowing eyes and long, jet-black hair streaked with silver, braided with bone
+charms. His lips curl into a sardonic smirk. In his right hand, he lazily holds a
+barbed agoniser whip; his left rests on the hilt of a rune-etched blade. The
+background is a dark throne room with twisted black wraithbone pillars, flayed
+banners, and faint violet and crimson lighting. Chains and soul-cages hang from
+the ceiling, and the air is filled with red smoke and flickering soul-lights, evoking
+menace and dark elegance.
 
     Prompt 3:
     
-Create an image of a solemn Battle Priest, clad in fur-lined armor crusted with frost and rimed with ice. His long, silver beard flows beneath a heavy hood embroidered with symbols of sacred power. In his gloved hands, he wields an ancient warhammer, its head sculpted like a snarling wolf, crackling with frozen energy. Cold mist curls around his boots as the frozen wind howls through a desolate mountain pass behind him. His calm, resolute expression suggests a spirit forged in hardship and tempered by unwavering faith.
+A Drukhari Wych stands poised in a lethal combat stance within a blood-soaked
+arena of Commorragh. Her lithe, muscular frame is adorned with sleek, form-
+fitting armor of dark crimson and obsidian black, trimmed with jagged silver
+edges. Her armor leaves her limbs exposed for agility, displaying scars from
+countless battles. Wicked, curved blades are attached to her wrists, gleaming
+under the arena&#39;s soul-light torches. Her face is partially hidden behind an ornate
+mask with sharp angular designs, and her piercing, predatory eyes glow with a
 
-Inspired by the setting of Warhammer 40k
+sinister green hue. Dark hair, streaked with pale silver, flows freely behind her as
+she moves. The ground beneath her is cracked and stained with old blood,
+scattered with broken weapons and bones. Spiked metal walls encircle the
+arena, with shadowy Drukhari spectators watching from the stands, their outlines
+illuminated by flickering purple flames. Chains and hooks hang ominously above,
+while green mist swirls along the ground, adding to the scene’s dangerous and
+electrifying atmosphere.
 
-must be a sci fi character
+Prompt 4:
 
-Negative Prompts:
-
-No casual modern clothing
-
-No anime or cartoonish features
-
-No neon cyberpunk elements
-
-No superhero-style stances
-    
+A tall, slender Drukhari Archon sits on an elevated throne forged from blackened
+bone and polished metal blades. He wears intricately crafted obsidian-black
+armor with crimson and silver trim, adorned with barbed filigree and etched
+symbols. Spiked pauldrons arc outward with delicate chains draped between
+them, holding trophies like rings and bones. A dark crimson cloak, lined with
+shimmering silk and shifting patterns of screaming faces, cascades down the
     
 EACH PROMPT GENERATION MUST INCLUDE INSPIRED BY THE SETTING OF WARHAMMER 40K
     """
@@ -122,6 +185,8 @@ def generate_image():
         prompt = description
     print(prompt)
 
+
+    # prompt= f"Ensure you have the correct number of limbs and eyes, and the correct number of limbs, and the correct number of eyes {prompt}"
     # Generate image using Leonardo AI with the description
     image_urls = generate_character_art(api_key, prompt)
     if not image_urls:

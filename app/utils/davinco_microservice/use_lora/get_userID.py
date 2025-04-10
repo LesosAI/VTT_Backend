@@ -1,6 +1,6 @@
 import requests
 
-url = "https://cloud.leonardo.ai/api/rest/v1/elements/user/72affbf4-7431-4363-86f2-7300f709096b"
+url = "https://cloud.leonardo.ai/api/rest/v1/me"
 
 headers = {
     "accept": "application/json",
@@ -9,4 +9,4 @@ headers = {
 
 response = requests.get(url, headers=headers)
 
-print(response.text) 
+print(response.text)

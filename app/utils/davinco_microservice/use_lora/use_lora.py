@@ -6,18 +6,18 @@ def generate_character_art(api_key, description=""):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
     
     # Construct the prompt using the provided description
-
+    prompt = f"Ensure you have the correct number of limbs and eyes and fingers {description}"
     # Request payload
     payload = {
         "modelId": "6b645e3a-d64f-4341-a6d8-7a3690fbf042",  # Phoenix 0.9 model
-        "prompt": description,
+        "prompt": prompt,
         "num_images": 1,
         "width": 1344,
         "height": 1344,
         "alchemy": True,  # Quality mode
         "enhancePrompt": False,  # Enable prompt enhancement for better results
     }
-    
+    api_key = "d7c28aff-c4cb-45ed-b1ae-990e5be7f4ff"
     headers = {
         "accept": "application/json",
         "content-type": "application/json",

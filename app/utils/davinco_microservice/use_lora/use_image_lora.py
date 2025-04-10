@@ -79,7 +79,7 @@ def generate_map_art(api_key, description=""):
 
 # Usage example
 if __name__ == "__main__":
-    api_key = "fab16a02-e482-4a89-a8cf-01397b4070de"  # Replace with your actual API key
+    api_key = "d7c28aff-c4cb-45ed-b1ae-990e5be7f4ff"  # Replace with your actual API key
     result = generate_map_art(api_key)
     if result:
         print("\nGenerated Image URL:")
