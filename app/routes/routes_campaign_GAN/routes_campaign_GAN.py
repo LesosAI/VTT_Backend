@@ -12,6 +12,9 @@ def get_campaigns(username):
     return jsonify([{
         'id': c.id,
         'name': c.name,
+        'genre': c.genre,
+        'tone': c.tone,
+        'setting': c.setting,
         'created_at': str(c.created_at)
     } for c in campaigns])
 
@@ -23,15 +26,22 @@ def create_campaign():
         
     campaign = Campaign(
         name=data['name'],
-        username=data['username']
+        username=data['username'],
+        genre=data.get('genre', 'fantasy'),
+        tone=data.get('tone', 'serious'),
+        setting=data.get('setting', 'medieval')
     )
     
     try:
         db.session.add(campaign)
         db.session.commit()
+        print(f"Campaign created: {campaign.name} by {campaign.username} having genre {campaign.genre} and tone {campaign.tone} in setting {campaign.setting}")
         return jsonify({
             'id': campaign.id,
             'name': campaign.name,
+            'genre': campaign.genre,
+            'tone': campaign.tone,
+            'setting': campaign.setting,
             'created_at': str(campaign.created_at)
         })
     except Exception as e:
