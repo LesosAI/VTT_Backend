@@ -1,5 +1,5 @@
 from . import db
-from sqlalchemy import Boolean, String, Text, ForeignKey, func, Integer, DateTime
+from sqlalchemy import JSON, Boolean, String, Text, ForeignKey, func, Integer, DateTime
 from datetime import datetime
 
 
@@ -91,6 +91,13 @@ class CampaignContent(db.Model):
     genre = db.Column(db.String(50), nullable=True)
     tone = db.Column(db.String(50), nullable=True)
     setting = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    contents = db.relationship('ContentChatHistory', backref='campaign_content', lazy=True)
+
+class ContentChatHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content_id = db.Column(db.Integer, ForeignKey('campaign_content.id'), nullable=False)
+    message = db.Column(JSON, nullable=False)  # Storing message as JSON, { role: 'user' | 'assistant', content: string }
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class BackgroundTask(db.Model):
