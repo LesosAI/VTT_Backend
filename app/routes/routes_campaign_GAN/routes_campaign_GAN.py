@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models.user import Campaign, CampaignContent, CharacterArt, Map, db
+from app.models.user import Campaign, CampaignContent, ContentChatHistory, CharacterArt, Map, db
 from datetime import datetime
 from app.utils.llm_for_text import generate_text
 
@@ -288,6 +288,20 @@ def regenerate_campaign_content(campaign_id, content_id):
 
     if not regenerated_content:
         return jsonify({'error': 'Failed to regenerate content'}), 500
+    
+    # Save chat history before updating
+    chat_history = ContentChatHistory(
+        content_id=content.id,
+        content_category=content.content_category,
+        message=[
+            {"role": "user", "content": user_prompt},
+            {"role": "assistant", "content": regenerated_content}
+        ],
+        genre=content.genre,
+        tone=content.tone,
+        setting=content.setting
+    )
+    db.session.add(chat_history)
 
     # Update all fields
     content.content = regenerated_content
@@ -321,6 +335,22 @@ def get_campaign_content(campaign_id):
         'setting': content.setting,
         'created_at': str(content.created_at)
     } for content in contents])
+
+@api_campaign_GAN.route('/campaigns/<int:campaign_id>/content/<int:content_id>', methods=['GET'])
+def get_content_history(campaign_id, content_id):
+    
+    # Get chat history for the specific content
+    chat_history = ContentChatHistory.query.filter_by(content_id=content_id).order_by(ContentChatHistory.created_at.desc()).all()
+    return jsonify([{
+        'id': history.id,
+        'content_id': history.content_id,
+        'message': history.message,
+        'content_category': history.content_category,
+        'genre': history.genre,
+        'tone': history.tone,
+        'setting': history.setting,
+        'created_at': str(history.created_at)
+    } for history in chat_history])
 
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/content', methods=['POST'])
 def add_campaign_content(campaign_id):
