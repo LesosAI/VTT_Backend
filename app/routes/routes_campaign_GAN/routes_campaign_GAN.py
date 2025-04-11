@@ -344,11 +344,17 @@ def update_campaign(campaign_id):
         return jsonify({'error': 'Unauthorized'}), 403
     
     campaign.name = data['name']
+    campaign.genre = data['genre']
+    campaign.tone = data['tone']
+    campaign.setting = data['setting']
     
     db.session.commit()
     return jsonify({
         'id': campaign.id,
         'name': campaign.name,
+        'genre': campaign.genre,
+        'tone': campaign.tone,
+        'setting': campaign.setting,
         'created_at': str(campaign.created_at)
     })
 
