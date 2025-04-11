@@ -98,6 +98,10 @@ class ContentChatHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content_id = db.Column(db.Integer, ForeignKey('campaign_content.id'), nullable=False)
     message = db.Column(JSON, nullable=False)  # Storing message as JSON, { role: 'user' | 'assistant', content: string }
+    content_category = db.Column(db.Text, nullable=True)
+    genre = db.Column(db.String(50), nullable=True)
+    tone = db.Column(db.String(50), nullable=True)
+    setting = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class BackgroundTask(db.Model):
