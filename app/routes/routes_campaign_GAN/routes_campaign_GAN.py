@@ -248,6 +248,20 @@ gothic horror, paranoia).
     db.session.add(content)
     db.session.commit()
     
+    chat_history = ContentChatHistory(
+        content_id=content.id,
+        content_category=data.get('content_category'),
+        message=[
+            {"role": "user", "content": data.get('description')},
+            {"role": "assistant", "content": generated_content}
+        ],
+        genre=data.get('genre'),
+        tone=data.get('tone'),
+        setting=data.get('setting')
+    )
+    db.session.add(chat_history)
+    db.session.commit()
+    
     return jsonify({
         'id': content.id,
         'content': content.content,
