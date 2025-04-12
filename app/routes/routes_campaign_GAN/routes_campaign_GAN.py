@@ -247,7 +247,7 @@ gothic horror, paranoia).
     )
     db.session.add(content)
     db.session.commit()
-    
+
     chat_history = ContentChatHistory(
         content_id=content.id,
         content_category=data.get('content_category'),
@@ -354,7 +354,7 @@ def get_campaign_content(campaign_id):
 def get_content_history(campaign_id, content_id):
     
     # Get chat history for the specific content
-    chat_history = ContentChatHistory.query.filter_by(content_id=content_id).order_by(ContentChatHistory.created_at.desc()).all()
+    chat_history = ContentChatHistory.query.filter_by(content_id=content_id).order_by(ContentChatHistory.created_at.asc()).all()
     return jsonify([{
         'id': history.id,
         'content_id': history.content_id,
@@ -405,6 +405,7 @@ def update_campaign(campaign_id):
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/content/<int:content_id>', methods=['DELETE'])
 def delete_campaign_content(campaign_id, content_id):
     content = CampaignContent.query.filter_by(id=content_id, campaign_id=campaign_id).first_or_404()
+    contentHistory = ContentChatHistory.query.filter_by(content_id=content_id).all()
     
     # Verify user owns this campaign
     campaign = Campaign.query.get(campaign_id)
@@ -414,14 +415,20 @@ def delete_campaign_content(campaign_id, content_id):
     if campaign.username != request.json.get('username'):
         return jsonify({'error': 'Unauthorized'}), 403
     
+    for history in contentHistory:
+        db.session.delete(history)
+
     db.session.delete(content)
     db.session.commit()
     
     return jsonify({'message': 'Content deleted successfully'})
 
-@api_campaign_GAN.route('/campaigns/<int:campaign_id>/content/<int:content_id>', methods=['PUT'])
-def update_campaign_content(campaign_id, content_id):
+@api_campaign_GAN.route('/campaigns/<int:campaign_id>/content/<int:content_id>/<string:action>', methods=['PUT'])
+def update_campaign_content(campaign_id, content_id, action):
     data = request.json
+    print("content_id", content_id)
+    print("campaign_id", campaign_id)
+    print(data.get('restoreContentId'))
     content = CampaignContent.query.filter_by(id=content_id, campaign_id=campaign_id).first_or_404()
     
     # Verify user owns this campaign
@@ -437,7 +444,45 @@ def update_campaign_content(campaign_id, content_id):
     content.genre = data.get('genre', content.genre)
     content.tone = data.get('tone', content.tone)
     content.setting = data.get('setting', content.setting)
-    content.content = data.get('content', content.content)
+
+    if action == 'restore':
+        previous_content = ContentChatHistory.query.filter_by(id=data.get('restoreContentId')).first_or_404()
+        content.content = previous_content.message[1]['content']
+    else:
+        content.content = data.get('content', content.content)
+
+    content.content_category = data.get('content_category', content.content_category)
+    
+    db.session.commit()
+
+    # Save chat history before updating
+    if action == 'update':
+        message = [
+            {"role": "user", "content": "UPDATED"},
+            {"role": "assistant", "content": data.get('content')}
+        ]
+    elif action == 'restore':
+        message = [
+            {"role": "user", "content": "RESTORED"},
+            {"role": "assistant", "content": content.content}
+        ]
+    else:
+        message = [
+            {"role": "user", "content": "UNKNOWN ACTION"},
+            {"role": "assistant", "content": data.get('content')}
+        ]
+
+    # Create the chat history entry
+    chat_history = ContentChatHistory(
+        content_id=content.id,
+        content_category=content.content_category,
+        message=message,
+        genre=content.genre,
+        tone=content.tone,
+        setting=content.setting
+    )
+
+    db.session.add(chat_history)
     
     db.session.commit()
     
