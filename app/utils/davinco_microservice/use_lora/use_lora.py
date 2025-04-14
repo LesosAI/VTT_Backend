@@ -67,7 +67,7 @@ def generate_character_art(api_key, description=""):
 
 # Usage example
 if __name__ == "__main__":
-    api_key = "fab16a02-e482-4a89-a8cf-01397b4070de"  # Replace with your actual API key
+    api_key = "d7c28aff-c4cb-45ed-b1ae-990e5be7f4ff"  # Replace with your actual API key
     full_prompt = "Create an image of an albino assassin in a fantasy world, with pale skin, white hair, and piercing red eyes. The assassin is dressed in sleek, black leather armor, adorned with intricate silver patterns. They are holding a deadly, curved blade with a glowing blue gem embedded in the hilt. The background is a shadowy alleyway, illuminated by the soft glow of a distant street lamp, casting long, ominous shadows."
     result = generate_character_art(api_key, full_prompt)
     if result:
