@@ -418,8 +418,8 @@ def generate_campaign_content(campaign_id):
         'created_at': str(content.created_at)
     })
 
-@api_campaign_GAN.route('campaigns/<int:campaign_id>/regenerate/<int:content_id>', methods=['POST'])
-def regenerate_campaign_content(campaign_id, content_id):
+@api_campaign_GAN.route('campaigns/<int:campaign_id>/regenerate/<int:content_id>/<string:mode>', methods=['POST'])
+def regenerate_campaign_content(campaign_id, content_id, mode):
     data = request.json
     campaign = Campaign.query.get_or_404(campaign_id)
     user_prompt = data.get('promptInput')
@@ -436,17 +436,39 @@ def regenerate_campaign_content(campaign_id, content_id):
     if not content:
         return jsonify({"error": "Content not found"}), 404
     
-    final_prompt = (
-        f"Original content:\n{content.content}\n\n"
-        f"User wants to regenerate it with this instruction:\n{user_prompt}\n\n"
-        f"Please regenerate the creative content that fits these instruction and maintains consistency accordingly."
-    )
+    if mode == "fully":
+        # Regenerate complete content using the LLM
+        final_prompt = (
+            f"Original content:\n{content.content}\n\n"
+            f"User wants to regenerate it with this instruction:\n{user_prompt}\n\n"
+            f"Please regenerate the creative content that fits these instruction and maintains consistency accordingly."
+        )
 
-    # Regenerate content using the LLM
-    regenerated_content = generate_text(final_prompt)
+        # Regenerate content using the LLM
+        regenerated_content = generate_text(final_prompt)
 
-    if not regenerated_content:
-        return jsonify({'error': 'Failed to regenerate content'}), 500
+        if not regenerated_content:
+            return jsonify({'error': 'Failed to regenerate content'}), 500
+
+    elif mode == "partially":
+        # Regenerate only the selected part of the content
+        final_prompt = (
+            f"Original content:\n{content.content}\n\n"
+            f"The user wants to regenerate the following part:\n{data.get('selectedText')}\n\n with this instruction:\n{user_prompt}\n\n"
+            f"Please regenerate only that part, keeping the rest of the story intact."
+        )
+
+        # Regenerate content using the LLM
+        regenerated_content = generate_text(final_prompt)
+
+        if not regenerated_content:
+            return jsonify({'error': 'Failed to regenerate content'}), 500
+        
+        if data.get('selectedText') not in content.content:
+            raise ValueError("Selected text not found in original content.")
+        
+        regenerated_content = content.content.replace(data.get('selectedText'), regenerated_content, 1)
+    
     
     # Save chat history before updating
     chat_history = ContentChatHistory(
