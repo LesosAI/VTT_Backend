@@ -24,7 +24,7 @@ def generate_map_art(api_key, description=""):
         "width": 1024,  
         "userElements": [  
             {  
-                "userLoraId": 23890,  
+                "userLoraId": 55689,  
                 "weight": 1  
             }  
         ]  
