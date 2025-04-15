@@ -23,6 +23,8 @@ api_login = Blueprint("login", __name__, url_prefix="")
 def signup():
     data = request.get_json()
 
+    first_name = data.get('firstName')
+    last_name = data.get('lastName')
     email = data.get('email')
     password = data.get('password')
 
@@ -34,7 +36,7 @@ def signup():
         return jsonify({"error": "Email already registered"}), 400
 
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-    new_user = User(username=email, email=email, password=hashed_password)
+    new_user = User(username=email, email=email, first_name=first_name, last_name=last_name, password=hashed_password)
 
     db.session.add(new_user)
     db.session.commit()
