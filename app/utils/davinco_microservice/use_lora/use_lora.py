@@ -17,7 +17,6 @@ def generate_character_art(api_key, description=""):
         "alchemy": True,  # Quality mode
         "enhancePrompt": False,  # Enable prompt enhancement for better results
     }
-    api_key = "d7c28aff-c4cb-45ed-b1ae-990e5be7f4ff"
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
@@ -66,12 +65,12 @@ def generate_character_art(api_key, description=""):
         return None
 
 # Usage example
-if __name__ == "_main_":
-    api_key = "fab16a02-e482-4a89-a8cf-01397b4070de"  # Replace with your actual API key
-    api_key = "d7c28aff-c4cb-45ed-b1ae-990e5be7f4ff"
-    full_prompt = "Create an image of an albino assassin in a fantasy world, with pale skin, white hair, and piercing red eyes. The assassin is dressed in sleek, black leather armor, adorned with intricate silver patterns. They are holding a deadly, curved blade with a glowing blue gem embedded in the hilt. The background is a shadowy alleyway, illuminated by the soft glow of a distant street lamp, casting long, ominous shadows."
-    result = generate_character_art(api_key, full_prompt)
-    if result:
-        print("\nGenerated Image URLs:")
-        for url in result:
-            print(url)
+# if __name__ == "_main_":
+#   # full_prompt = "Create an image of an albino assassin in a fantasy world, with pale skin, white hair, and piercing red eyes. The assassin is dressed in sleek, black leather armor, adorned with intricate silver patterns. They are holding a deadly, curved blade with a glowing blue gem embedded in the hilt. The background is a shadowy alleyway, illuminated by the soft glow of a distant street lamp, casting long, ominous shadows."
+    # full_prompt = generate_prompt_fantasy("A Firbolg eco-mystic trying to regrow dead worlds")
+    # full_prompt = generate_prompt_scifi("A Dragonborn mercenary wielding twin plasma axes")
+    # result = generate_character_art(api_key, full_prompt)
+    # if result:
+    #     print("\nGenerated Image URLs:")
+    #     for url in result:
+    #         print(url)
