@@ -86,7 +86,7 @@ camera framing to emphasize mood, depth, and detail.
     """
     general_instructions = "must be a fantasy character, with the correct number of limbs, and the correct number of eyes, and the correct number of fingers.  ENSURE THE OUTPUT IS BELLOW 250 WORDS, ENSURE THE OUTPUT IS BELLOW 250 WORDS"
 
-    prompt = f"Generate a prompt for a fantasy character based on this description: {description}. Please use the following general instructions: {general_instructions}. Use the following examples as a reference: {example_prompts}"
+    prompt = f"Generate a prompt for a fantasy character STRICTLY within 1350 CHARACTERS based on this description: {description}. Please use the following general instructions: {general_instructions}. Use the following examples as a reference: {example_prompts}"
     prompt = generate_text(prompt)
     return prompt
 
@@ -156,7 +156,7 @@ shimmering silk and shifting patterns of screaming faces, cascades down the
     
 EACH PROMPT GENERATION MUST INCLUDE INSPIRED BY THE SETTING OF WARHAMMER 40K
     """
-    prompt = f"Generate a prompt for a scifi character based on this description: {description}. Use the following examples as a reference: {example_prompts}"
+    prompt = f"Generate a prompt for a scifi character STRICTLY within 1350 CHARACTERS based on this description: {description}. Use the following examples as a reference: {example_prompts}"
     prompt = generate_text(prompt)
     return prompt
 
@@ -184,6 +184,9 @@ def generate_image():
     else:
         prompt = description
     print(prompt)
+
+    if len(prompt) >= 1430:
+        return ' '.join(prompt[:1430]) + '...'
 
 
     # prompt= f"Ensure you have the correct number of limbs and eyes, and the correct number of limbs, and the correct number of eyes {prompt}"
