@@ -13,6 +13,21 @@ api_image_GAN = Blueprint("api_image_GAN", __name__, url_prefix="/api")
 
 
 def generate_prompt_fantasy(description):
+
+    # Add species-specific context
+    species_context = {
+        "tabaxi": "They are feline humanoids with sleek fur, sharp claws, and an agile build. Known for their curiosity, speed, and nomadic lifestyle. Their features blend jungle cat elegance with tribal mystique.",
+        "firbolg": "They are gentle forest giants, standing tall with mossy skin and glowing blue eyes. They revere nature, wield druidic magic, and often serve as hidden guardians of the woods.",
+        "dragonborn": "They are proud, draconic humanoids with scaled skin, strong physiques, and a breath weapon tied to their ancestral lineage. Their culture is steeped in honor and legacy."
+    }
+
+    # Normalize and inject context if species is mentioned
+    lowered = description.lower()
+    for species, context in species_context.items():
+        if species in lowered:
+            description += f" ({context})"
+            break
+
     example_prompts = """
     
     Prompt 1:       
@@ -91,6 +106,30 @@ camera framing to emphasize mood, depth, and detail.
     return prompt
 
 def generate_prompt_scifi(description):
+
+    # Sci-fi flavored context for shared species
+    species_context = {
+        "tabaxi": (
+            "They are feline humanoids adapted to high-gravity frontier worlds, known for agility, stealth, and sharp reflexes. "
+            "Often serving as scouts, infiltrators, or rogue tech-thieves, they have sleek fur, enhanced senses, and flexible digitigrade legs."
+        ),
+        "firbolg": (
+            "They are massive bio-engineered forest dwellers from terraformed arboreal planets. "
+            "Possessing empathic abilities and plant-symbiotic cybernetics, they act as healers, guardians, or eco-hackers in deep green zones."
+        ),
+        "dragonborn": (
+            "They are proud, draconic humanoids from irradiated wastelands or forge-worlds. "
+            "Known for their scale-armored skin, plasma breath, and a culture steeped in ancient war-rites, they often serve as elite shock troopers or honor-bound emissaries."
+        )
+    }
+
+    lowered = description.lower()
+    for species, context in species_context.items():
+        if species in lowered:
+            description += f" ({context})"
+            break
+
+
     example_prompts = """
     Prompt 1:       
 
@@ -185,8 +224,8 @@ def generate_image():
         prompt = description
     print(prompt)
 
-    if len(prompt) >= 1430:
-        return ' '.join(prompt[:1430]) + '...'
+    if len(prompt) > 1420:
+        return prompt[:1420] + '...'
 
 
     # prompt= f"Ensure you have the correct number of limbs and eyes, and the correct number of limbs, and the correct number of eyes {prompt}"
