@@ -225,7 +225,7 @@ def generate_image():
     print(prompt)
 
     if len(prompt) > 1420:
-        return prompt[:1420] + '...'
+        return prompt[:1420]
 
 
     # prompt= f"Ensure you have the correct number of limbs and eyes, and the correct number of limbs, and the correct number of eyes {prompt}"
