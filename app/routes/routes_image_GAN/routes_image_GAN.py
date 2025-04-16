@@ -14,14 +14,14 @@ api_image_GAN = Blueprint("api_image_GAN", __name__, url_prefix="/api")
 
 def generate_prompt_fantasy(description):
 
-    # Add species-specific context
+    # Species-specific context
     species_context = {
-        "tabaxi": "They are feline humanoids with sleek fur, sharp claws, and an agile build. Known for their curiosity, speed, and nomadic lifestyle. Their features blend jungle cat elegance with tribal mystique.",
-        "firbolg": "They are gentle forest giants, standing tall with mossy skin and glowing blue eyes. They revere nature, wield druidic magic, and often serve as hidden guardians of the woods.",
-        "dragonborn": "They are proud, draconic humanoids with scaled skin, strong physiques, and a breath weapon tied to their ancestral lineage. Their culture is steeped in honor and legacy."
+        "tabaxi": "Feline humanoids with sleek fur, sharp claws, and an agile build. Known for their curiosity, speed, and nomadic lifestyle. Their features blend jungle cat elegance with tribal mystique.",
+        "firbolg": "Gentle forest giants, with mossy skin and glowing blue eyes. They revere nature, wield druidic magic, and act as hidden guardians of the woods.",
+        "dragonborn": "Proud, draconic humanoids with scaled skin and a breath weapon tied to their lineage. Their culture is steeped in honor and ancient legacy."
     }
 
-    # Normalize and inject context if species is mentioned
+    # Inject species lore if found
     lowered = description.lower()
     for species, context in species_context.items():
         if species in lowered:
@@ -99,10 +99,24 @@ methodical, steeped in grim curiosity. Use cinematic perspective with natural
 camera framing to emphasize mood, depth, and detail.
 
     """
-    general_instructions = "must be a fantasy character, with the correct number of limbs, and the correct number of eyes, and the correct number of fingers.  ENSURE THE OUTPUT IS BELLOW 250 WORDS, ENSURE THE OUTPUT IS BELLOW 250 WORDS"
+    # Instructions to ChatGPT
+    instructions = (
+        "You are a fantasy concept artist's AI assistant. "
+        "Given a brief character description, generate a rich, visual prompt for AI image generation in Leonardo.Ai. "
+        "Use vivid detail, imaginative fantasy elements, physical traits, clothing, and setting. "
+        "The character must have a realistic number of limbs, eyes, and fingers. "
+        "Do NOT exceed 1350 characters. "
+        "End with: 'Use cinematic perspective with natural camera framing to emphasize mood, depth, and detail.'"
+    )
 
-    prompt = f"Generate a prompt for a fantasy character STRICTLY within 1350 CHARACTERS based on this description: {description}. Please use the following general instructions: {general_instructions}. Use the following examples as a reference: {example_prompts}"
-    prompt = generate_text(prompt)
+    # Compose final GPT prompt
+    final_prompt = (
+        f"{instructions}\n\n"
+        f"User description: \"{description}\"\n\n"
+        f"Examples:\n{example_prompts}\n\n"
+        f"Generate the final prompt below:\n"
+    )
+    prompt = generate_text(final_prompt)
     return prompt
 
 def generate_prompt_scifi(description):
@@ -110,16 +124,16 @@ def generate_prompt_scifi(description):
     # Sci-fi flavored context for shared species
     species_context = {
         "tabaxi": (
-            "They are feline humanoids adapted to high-gravity frontier worlds, known for agility, stealth, and sharp reflexes. "
-            "Often serving as scouts, infiltrators, or rogue tech-thieves, they have sleek fur, enhanced senses, and flexible digitigrade legs."
+            "Feline humanoids adapted to high-gravity frontier worlds, renowned for stealth, speed, and cyber-reflexes. "
+            "Often serve as scouts, infiltrators, or rogue tech-thieves with sleek fur and digitigrade legs."
         ),
         "firbolg": (
-            "They are massive bio-engineered forest dwellers from terraformed arboreal planets. "
-            "Possessing empathic abilities and plant-symbiotic cybernetics, they act as healers, guardians, or eco-hackers in deep green zones."
+            "Massive, bio-engineered forest dwellers from terraformed green worlds. "
+            "Use empathic powers and symbiotic plant-cybernetics, often healers or eco-hackers deep in biozones."
         ),
         "dragonborn": (
-            "They are proud, draconic humanoids from irradiated wastelands or forge-worlds. "
-            "Known for their scale-armored skin, plasma breath, and a culture steeped in ancient war-rites, they often serve as elite shock troopers or honor-bound emissaries."
+            "Draconic humanoids from irradiated wastelands and forge-worlds, with scale-armored skin, plasma breath, and ancient warrior codes. "
+            "Serve as shock troopers, warlords, or emissaries from lost dynasties."
         )
     }
 
@@ -195,8 +209,26 @@ shimmering silk and shifting patterns of screaming faces, cascades down the
     
 EACH PROMPT GENERATION MUST INCLUDE INSPIRED BY THE SETTING OF WARHAMMER 40K
     """
-    prompt = f"Generate a prompt for a scifi character STRICTLY within 1350 CHARACTERS based on this description: {description}. Use the following examples as a reference: {example_prompts}"
-    prompt = generate_text(prompt)
+# GPT instructions
+    instructions = (
+        "You are a prompt engineer for AI image generation based on high-fidelity sci-fi character art. "
+        "Based on the description, craft a highly imaginative and cinematic prompt suitable for Leonardo.Ai. "
+        "Use rich detail, technology, atmosphere, attire, and dramatic setting. Always reflect elements from the Warhammer 40K universe for tone and depth. "
+        "Do NOT exceed 1350 characters "
+        "Ensure the character has the correct number of limbs, eyes, and fingers. "
+        "End the prompt with: 'Use cinematic perspective with natural camera framing to emphasize mood, depth, and detail.'"
+    )
+
+    # Final input for ChatGPT
+    final_prompt = (
+        f"{instructions}\n\n"
+        f"User description: \"{description}\"\n\n"
+        f"Example prompts:\n{example_prompts}\n\n"
+        f"Now write the final prompt below:\n"
+    )    
+
+    prompt = generate_text(final_prompt)
+
     return prompt
 
 
