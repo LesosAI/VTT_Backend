@@ -14,7 +14,8 @@ class User(db.Model):
         backref=db.backref('parent', remote_side=[username]),
         foreign_keys=[parent_username]
     )
-    email = db.Column(db.String(150), unique=True, nullable=False)  # Add this line
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    is_verified = db.Column(db.Boolean, default=False)
     first_name = db.Column(db.String(150), nullable=True)
     last_name = db.Column(db.String(150), nullable=True)
 
