@@ -1,20 +1,61 @@
 import os
 import uuid
 from random import choice
-from flask import Blueprint, Flask, jsonify, request
+from flask import Blueprint, Flask, app, jsonify, redirect, request
 from flask_cors import CORS
+from flask_mail import Message
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 from app.models import db
+from app.utils import mail
 from app.models.user import User, Plan
 import jwt
 from datetime import datetime, timedelta
+from itsdangerous import URLSafeTimedSerializer
 
 load_dotenv()  # This loads the environment variables from .env file
 
 api_login = Blueprint("login", __name__, url_prefix="")
+
+serializer = URLSafeTimedSerializer(os.getenv('SECRET_KEY'))
+
+def generate_verification_token(email):
+    return serializer.dumps(email, salt="email-confirm")
+
+@api_login.route('/send-verification', methods=['POST'])
+def send_verification_email():
+    data = request.get_json()
+    email = data.get('email')
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    token = generate_verification_token(email)
+    verify_url = f"{os.getenv('DOMAIN')}/verify-email?token={token}"
+
+    msg = Message("Verify your email", recipients=[email])
+    msg.body = f"Please click the link to verify your email: {verify_url}"
+    mail.send(msg)
+
+    return jsonify({"message": "Verification email sent"}), 200
+
+
+@api_login.route('/verify-email', methods=['GET'])
+def verify_email():
+    token = request.args.get('token')
+    try:
+        email = serializer.loads(token, salt="email-confirm", max_age=3600)
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({"error": "User not found."}), 400
+
+        user.is_verified = True
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Invalid or expired token"}), 400
 
 
 
@@ -61,6 +102,9 @@ def login():
     if not user or not check_password_hash(user.password, password):
         print("Invalid username or password")
         return jsonify({"error": "Invalid username or password"}), 400
+    
+    if not user.is_verified:
+        return {"error": "Please verify your email"}, 403
 
     print("Login successful")
     # Check if user has any subscription
