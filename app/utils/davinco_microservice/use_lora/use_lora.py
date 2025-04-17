@@ -2,7 +2,7 @@ import requests
 import json
 import time
 
-def generate_character_art(api_key, description=""):
+def generate_character_art(api_key, description="", negative_prompt=""):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
     
     # Construct the prompt using the provided description
@@ -11,6 +11,7 @@ def generate_character_art(api_key, description=""):
     payload = {
         "modelId": "6b645e3a-d64f-4341-a6d8-7a3690fbf042",  # Phoenix 0.9 model
         "prompt": prompt,
+        "negative_prompt": negative_prompt,
         "num_images": 1,
         "width": 1344,
         "height": 1344,
