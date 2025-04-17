@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from .config import DevelopmentConfig
 from .models import db
+from .utils import mail
 from dotenv import load_dotenv
 from sqlalchemy import inspect
 from datetime import datetime, timedelta
@@ -222,6 +223,17 @@ def create_app():
     app.config.from_object(DevelopmentConfig)  # Load development config
 
     db.init_app(app)
+
+    app.config.update(
+        MAIL_SERVER='smtp.gmail.com',
+        MAIL_PORT=587,
+        MAIL_USE_TLS=True,
+        MAIL_USERNAME=os.getenv("SMTP_USER"),
+        MAIL_PASSWORD=os.getenv("SMTP_PASSWORD"),
+        MAIL_DEFAULT_SENDER=os.getenv("SMTP_USER")
+    )
+
+    mail.init_app(app)
 
     # uri="postgres://udak05j6j87jdg:p0d625c18fe2ea5a3c03d51076ca0ea2f2e3003d0acd7c118df00ac535396f581@c5hilnj7pn10vb.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d10vr5oaanqd9t"
     app.register_blueprint(api_login)
