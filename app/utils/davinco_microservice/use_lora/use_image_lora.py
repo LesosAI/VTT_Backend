@@ -6,25 +6,27 @@ def generate_map_art(api_key, description=""):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
     
     # Construct the prompt using the provided description
-    base_prompt = f"Generate a top-down view D&D map based on this description: {description}. "
-    style_prompt = "The map should include clear details of terrain, landmarks, and structures. High quality, detailed cartography style. DO NOT INCLUDE GRID LINES"
-    view_prompt = "Must be a perfect top-down view looking directly down at the map"
+    base_prompt = f"Generate a highly detailed fantasy D&D battle map from a top-down perspective. Description: {description}. "
+    style_prompt = "Include varied terrain like rivers, cliffs, forests, and ruins. Use illustrated cartographic symbols. Highly detailed, parchment-style, without grid lines."
+    view_prompt = "Must be a perfectly vertical top-down view, no tilt or perspective distortion."
     
     # Combine prompts
     full_prompt = f"{base_prompt} {style_prompt} {view_prompt}"
     
     # Request payload
     payload = {  
-        "alchemy": True,  
+        # "alchemy": True,  
         "height": 768,  
-        "modelId": "aa77f04e-3eec-4034-9c07-d0f619684628",  
+        # "modelId": "aa77f04e-3eec-4034-9c07-d0f619684628",  
+        "modelId": "b2614463-296c-462a-9586-aafdb8f00e36",  
         "num_images": 4,  
         "presetStyle": "DYNAMIC",  
         "prompt": full_prompt,  
         "width": 1024,  
         "userElements": [  
             {  
-                "userLoraId": 23890,  
+                "userLoraId": 55689, # fantasy 
+                # "userLoraId": 58095, # sci-fi 
                 "weight": 1  
             }  
         ]  
@@ -38,6 +40,7 @@ def generate_map_art(api_key, description=""):
     
     try:
         response = requests.post(url, json=payload, headers=headers)
+        print(response.text)  # Debug print
         response.raise_for_status()
         
         # Get the generation ID from the response
