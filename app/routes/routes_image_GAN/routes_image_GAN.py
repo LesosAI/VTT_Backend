@@ -104,15 +104,41 @@ camera framing to emphasize mood, depth, and detail.
         "You are a fantasy concept artist's AI assistant. "
         "Given a brief character description, generate a rich, visual prompt for AI image generation in Leonardo.Ai. "
         "Use vivid detail, imaginative fantasy elements, physical traits, clothing, and setting. "
-        "The character must have a realistic number of limbs, eyes, and fingers. "
+        "The character must have a realistic NUMBER of limbs, eyes, and fingers. "
+        "DO NOT HAVE ANY WATERMARKS, LOGOS, OR TEXT. "
         "Do NOT exceed 1350 characters. "
         "End with: 'Use cinematic perspective with natural camera framing to emphasize mood, depth, and detail.'"
     )
 
+    # Technical quality specifications
+    technical_specs = [
+        "8K resolution",
+        "ultra-detailed",
+        "photorealistic textures",
+        "volumetric lighting",
+        "ray-traced shadows",
+        "physically based rendering",
+        "depth of field",
+        "rule of thirds composition",
+        "dramatic lighting",
+        "atmospheric perspective"
+    ]
+    
+    # Style specifications for fantasy art
     fantasy_style = (
-        "ultra-detailed, cinematic lighting, atmospheric depth, highly dynamic pose, "
-        "photo-realistic textures, flowing fabrics, intricate armor, ornate accessories, "
-        "4K, sharp focus, dramatic shadows, golden hour or moody lighting, majestic scenery, "
+        "intricate details",
+        "ornate embellishments",
+        "dynamic pose",
+        "complex fantasy environment",
+        "magical atmosphere",
+        "epic scale",
+        "dramatic weather effects",
+        "ambient magical particles",
+        "rich color grading",
+        "mythological influences",
+        "ultra-detailed, cinematic lighting, atmospheric depth, highly dynamic pose, ",
+        "photo-realistic textures, flowing fabrics, intricate armor, ornate accessories, ",
+        "4K, sharp focus, dramatic shadows, golden hour or moody lighting, majestic scenery, ",
         "dust particles, volumetric fog, epic background, stylized realism"
     )
 
@@ -122,6 +148,7 @@ camera framing to emphasize mood, depth, and detail.
         f"User description: \"{description}\"\n\n"
         f"Examples:\n{example_prompts}\n\n"
         f"Prompt settings:\n{fantasy_style}\n\n"
+        f"Technical settings:\n{technical_specs}\n\n"
         f"Generate the final prompt below:\n"
     )
     prompt = generate_text(final_prompt)
@@ -155,25 +182,67 @@ def generate_prompt_scifi(description):
     example_prompts = """
     Prompt 1:       
 
-
-A tall, slender Drukhari Archon sits on an elevated throne forged from blackened bone and polished metal blades. He wears intricately crafted obsidian-black armor with crimson and silver trim, adorned with barbed filigree and etched symbols. Spiked pauldrons arc outward with delicate chains draped between them, holding trophies like rings and bones. A dark crimson cloak, lined with shimmering silk and shifting patterns of screaming faces, cascades down the throne steps. His pale, gaunt face has sharp, aristocratic features with crimson glowing eyes and long, jet-black hair streaked with silver, braided with bone charms. His lips curl into a sardonic smirk. In his right hand, he lazily holds a barbed agoniser whip; his left rests on the hilt of a rune-etched blade. The background is a dark throne room with twisted black wraithbone pillars, flayed banners, and faint violet and crimson lighting. Chains and soul-cages hang from the ceiling, and the air is filled with red smoke and flickering soul-lights, evoking menace and dark elegance.
+Long-dead figure standing amidst the ruins of a derelict voidship throne room. He
+wears rusted, once-regal golden armor, now corroded and battle-worn, with a
+shattered Aquila emblazoned on his chest—one wing missing, the other
+scorched and twisted. His face is half-decayed, revealing dry bone beneath
+peeling flesh, yet he remains animate, his expression solemn and distant. His
+movements appear glitched and fragmented, as though trapped in overlapping
+timelines, flickering slightly out of sync with reality. He clutches a broken signet
+ring in his right hand, its crest matching the symbol etched onto a crumbling
+Warrant of Trade at his feet. Warp-light spills through a shattered viewing window
+behind him, casting eerie violet and blue hues across the fractured marble floor
+and drifting motes of dust. The air crackles with static interference and residual
+energy, and faint ghost-images of alternate versions of the figure briefly phase
+around him—remnants of fractured time. Set the atmosphere to feel heavy with
+sorrow, grandeur, and haunting decay, evoking a lost legacy corrupted by the
+passage of time and exposure to the warp.
 
     Prompt 2:
 
-A Drukhari Wych stands poised in a lethal combat stance within a blood-soaked arena of Commorragh. Her lithe, muscular frame is adorned with sleek, form-fitting armor of dark crimson and obsidian black, trimmed with jagged silver edges. Her armor leaves her limbs exposed for agility, displaying scars from countless battles. Wicked, curved blades are attached to her wrists, gleaming under the arena's soul-light torches. Her face is partially hidden behind an ornate mask with sharp angular designs, and her piercing, predatory eyes glow with a sinister green hue. Dark hair, streaked with pale silver, flows freely behind her as she moves. The ground beneath her is cracked and stained with old blood, scattered with broken weapons and bones. Spiked metal walls encircle the arena, with shadowy Drukhari spectators watching from the stands, their outlines illuminated by flickering purple flames. Chains and hooks hang ominously above, while green mist swirls along the ground, adding to the scene’s dangerous and electrifying atmosphere.
+A tall, slender Drukhari Archon sits on an elevated throne forged from blackened
+bone and polished metal blades. He wears intricately crafted obsidian-black
+armor with crimson and silver trim, adorned with barbed filigree and etched
+symbols. Spiked pauldrons arc outward with delicate chains draped between
+them, holding trophies like rings and bones. A dark crimson cloak, lined with
+shimmering silk and shifting patterns of screaming faces, cascades down the
+throne steps. His pale, gaunt face has sharp, aristocratic features with crimson
+glowing eyes and long, jet-black hair streaked with silver, braided with bone
+charms. His lips curl into a sardonic smirk. In his right hand, he lazily holds a
+barbed agoniser whip; his left rests on the hilt of a rune-etched blade. The
+background is a dark throne room with twisted black wraithbone pillars, flayed
+banners, and faint violet and crimson lighting. Chains and soul-cages hang from
+the ceiling, and the air is filled with red smoke and flickering soul-lights, evoking
+menace and dark elegance.
 
     Prompt 3:
     
-An ancient, half-dead figure sat enthroned atop a pile of decaying data-slates, cracked scrolls, and rusted cogitator cores. His bloated, cybernetic body is heavily augmented, hunched forward and partially fused into a vast, gothic cogitator array that surrounds him like a mechanical throne. His torso is adorned with fading cog-mechanicus symbols, exposed cabling, and layered circuits. Dozens of mechadendrites emerge from his back like a tangle of mechanical tentacles, some plugged directly into data terminals, others idly twitching as if searching for more information to consume. His arms are elongated and skeletal, permanently fused into ancient data-scroll readers and spinning memory-core spindles. His face is withered flesh with only remnants of bone remaining, encased in a cracked rebreather mask. One glowing bionic eye glows red with cold logic; the other socket leaks sacred machine-oil, trailing down his face. His lips are pulled back in a rictus sneer, and his mouth murmurs fragmented binary litanies. Around his throne, faded banners hang from servo-cranes, displaying forgotten Mechanicus designations. Dim, flickering cogitator screens glow in the background, filled with scrolling, corrupted data code. The lighting is cold and sterile, casting deep shadows across the throne and highlighting the ancient, inhuman presence of the Dominus.
+A Drukhari Wych stands poised in a lethal combat stance within a blood-soaked
+arena of Commorragh. Her lithe, muscular frame is adorned with sleek, form-
+fitting armor of dark crimson and obsidian black, trimmed with jagged silver
+edges. Her armor leaves her limbs exposed for agility, displaying scars from
+countless battles. Wicked, curved blades are attached to her wrists, gleaming
+under the arena&#39;s soul-light torches. Her face is partially hidden behind an ornate
+mask with sharp angular designs, and her piercing, predatory eyes glow with a
+
+sinister green hue. Dark hair, streaked with pale silver, flows freely behind her as
+she moves. The ground beneath her is cracked and stained with old blood,
+scattered with broken weapons and bones. Spiked metal walls encircle the
+arena, with shadowy Drukhari spectators watching from the stands, their outlines
+illuminated by flickering purple flames. Chains and hooks hang ominously above,
+while green mist swirls along the ground, adding to the scene’s dangerous and
+electrifying atmosphere.
 
 Prompt 4:
 
-A massive, corrupted medical servitor stands in the center of a decayed Adeptus Mechanicus hospital ship. Once a battlefield triage unit, it now harvests instead of heals. Its towering frame is reinforced with battle-worn plating, covered in rust, dried blood, and faded cog-mechanicus sigils. Its featureless faceplate has a single flickering red optic, scanning with eerie precision, while its exposed lower jaw reveals stitched flesh and grotesque vocal augments that distort its speech into garbled binary and mechanical whispers. A nightmarish array of surgical appendages twitches with malicious intent. Whirring bone saws, arterial extractors, and fluid injectors filled with unknown substances calibrate automatically, each tool designed for life-saving procedures now repurposed for something far worse. One oversized manipulator claw, once used to stabilize patients, now grips with bone-crushing force. Its reinforced exoskeleton is riddled with leaking tubes pumping virulent green fluids, leaving sickly trails of oil and organic matter in its wake. One arm wields a rusted, bloodstained surgical saw, while another flexes a long, serrated injector filled with an unknown concoction. The atmosphere is sterile horror, where once-sacred technology has become a nightmare of clinical detachment and mechanical dread.
-
-    Prompt 5:
-    Captain Ellara Venn, a Warhammer 40k Rogue Trader, exudes authority and alluring sensuality. She wears a navy blue coat with gold filigree, a crimson-lined interior, and a corset-like black leather bodice adorned with silver runes. Her crimson sash, pinned with a ruby-encrusted aquila seal, complements her sleek navy trousers and gilded knee-high boots. A Gothic steel pauldron with sigils and a golden epaulet enhance her commanding presence. She carries an ornate power saber with a skull motif and a plasma pistol, with a crystal-tipped cane in one hand. Her golden hair flows in waves, framing her porcelain skin, sharp almond-shaped eyes, and a faint scar on her cheekbone. Set on a starship's dimly lit, Gothic-style command deck, with brass pipes and glowing panels, her presence is regal and foreboding.
-
-
+A tall, slender Drukhari Archon sits on an elevated throne forged from blackened
+bone and polished metal blades. He wears intricately crafted obsidian-black
+armor with crimson and silver trim, adorned with barbed filigree and etched
+symbols. Spiked pauldrons arc outward with delicate chains draped between
+them, holding trophies like rings and bones. A dark crimson cloak, lined with
+shimmering silk and shifting patterns of screaming faces, cascades down the
+    
+EACH PROMPT GENERATION MUST INCLUDE INSPIRED BY THE SETTING OF WARHAMMER 40K
     """
 # GPT instructions
     instructions = (
@@ -181,11 +250,35 @@ A massive, corrupted medical servitor stands in the center of a decayed Adeptus 
         "Based on the description, craft a highly imaginative and cinematic prompt suitable for Leonardo.Ai. "
         "Use rich detail, technology, atmosphere, attire, and dramatic setting. Always reflect elements from the Warhammer 40K universe for tone and depth. "
         "Do NOT exceed 1350 characters "
-        "Ensure the character has the correct number of limbs, eyes, and fingers. "
+        "The character must have a realistic NUMBER of limbs, eyes, and fingers. "
+        "DO NOT HAVE ANY WATERMARKS, LOGOS, OR TEXT."
         "End the prompt with: 'Use cinematic perspective with natural camera framing to emphasize mood, depth, and detail.'"
     )
 
+    # Technical quality specifications for sci-fi rendering
+    technical_specs = [
+        "8K resolution",
+        "ultra-detailed",
+        "ray-traced reflections",
+        "volumetric lighting",
+        "physically based rendering",
+        "subsurface scattering for synthetic skin",
+        "detailed material texturing",
+        "advanced particle effects",
+        "HDR lighting",
+        "atmospheric perspective"
+    ]
+    
     scifi_style = (
+        "hard surface detailing",
+        "technological intricacy",
+        "realistic material properties",
+        "microelectronic pattern detailing",
+        "ambient occlusion",
+        "specular highlights on metal surfaces",
+        "holographic interfaces",
+        "realistic proportions",
+        "high contrast lighting"
         "sci-fi ultra-detail, neon reflections, biomechanical textures, cinematic cyberpunk lighting, "
         "4K resolution, gritty or sterile futuristic environments (like starships, megacities, alien ruins), "
         "realistic materials, glowing holograms, tactical gear, rain, smoke, HDR contrast, chromatic aberration"
@@ -197,6 +290,7 @@ A massive, corrupted medical servitor stands in the center of a decayed Adeptus 
         f"User description: \"{description}\"\n\n"
         f"Example prompts:\n{example_prompts}\n\n"
         f"Prompt settings:\n{scifi_style}\n\n"
+        f"Technical settings:\n{technical_specs}\n\n"
         f"Now write the final prompt below:\n"
     )    
 
@@ -223,12 +317,8 @@ def generate_image():
 
     if style == "fantasy":
         prompt = generate_prompt_fantasy(description)
-        negative_prompt = "blurry, extra limbs, malformed hands, extra fingers, disfigured face, low quality, poorly drawn, deformed, glitch, cartoon, disjointed anatomy, cropped, signature, text"
-        
     elif style == "sci-fi":
         prompt = generate_prompt_scifi(description)
-        negative_prompt = "blurry, extra limbs, deformed hands, extra fingers, double head, disfigured, low detail, poor anatomy, surreal, abstract, glitchy, cartoonish, cropped, watermarked, text, signature"
-        
     else:
         prompt = description
     print(prompt)
@@ -239,7 +329,7 @@ def generate_image():
 
     # prompt= f"Ensure you have the correct number of limbs and eyes, and the correct number of limbs, and the correct number of eyes {prompt}"
     # Generate image using Leonardo AI with the description
-    image_urls = generate_character_art(api_key, prompt, negative_prompt)
+    image_urls = generate_character_art(api_key, prompt)
     if not image_urls:
         return jsonify({'error': 'Failed to generate image'}), 500
 
