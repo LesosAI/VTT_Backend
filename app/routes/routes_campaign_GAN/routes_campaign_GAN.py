@@ -62,12 +62,21 @@ def build_campaign_prompt(data, context: str = "") -> str:
     setting = data.get('setting', 'space')
     description = trim_to_word_limit(data.get('description', ''))
 
+    # Create a more explicit instruction about summaries
+    no_summary_instruction = """
+IMPORTANT: Do NOT include any summary, recap, or conclusion at the end of your response.
+Do NOT end with phrases like "In conclusion," "To summarize," or "In summary."
+Do NOT restate the key points or provide an overview at the end.
+End your response with the final detail or element of the content without summarizing.
+"""
+
     base_intro = f"""Generate RPG content for the following category: {category}.
 Genre: {genre}
 Tone: {tone}
 Setting: {setting}
 
 Be creative, consistent with the tone, and modular for gameplay use.
+{no_summary_instruction}
 Prompt: {description}
 """
 
@@ -83,7 +92,7 @@ Highlight dominant powers (Imperium, Renegades, Chaos, Xenos, Independent Sects)
 Set the ideological or cultural conflicts (techno-religion vs. progressivism, faith vs. heresy).
 Note any geographic/atmospheric anomalies (warp storms, ice moons, gravity fractures).
 Introduce planet-wide mysteries or ancient ruins.
-✅ Example: Planetary Setting: “Desoleum Exile”
+✅ Example: Planetary Setting: "Desoleum Exile"
 Once a prosperous trade hub in the Desoleum system, the planet has been excommunicated by the Imperium following a failed Exterminatus turned ecological collapse. Its surface is cloaked in endless sulfuric storms, and cities now float in the high stratosphere, connected by magnetic rail-lanes. Technocults, surviving Enforcer guilds, and outlawed psyker enclaves vie for control of the dwindling population.
 
 2. Power Blocs & Conflicts
@@ -98,9 +107,9 @@ Grav-Vault Cities: Floating megalithic fortresses powered by heretical grav-engi
 The Black Wells: Surface-level pits that swallow entire caravans; theorized to be warp-vents.
 4. Cultural Details & Daily Life
 
-Citizens undergo weekly “purity audits” involving psychic scans and blood rites.
+Citizens undergo weekly "purity audits" involving psychic scans and blood rites.
 Servitor markets barter in memory fragments and clone organs.
-Local legends speak of “The Reclaimer” — a forgotten STC entity buried deep underground.
+Local legends speak of "The Reclaimer" — a forgotten STC entity buried deep underground.
 5. Expansion Hooks
 
 Rumors spread of an Eldar craftworld crash-landing millennia ago.
@@ -117,8 +126,8 @@ Define the central conflict and thematic underpinnings (corruption, fate, heresy
 Clarify key factions and their motivations.
 Include player decision weight and long-term consequences.
 Embed mythos or esoteric elements to deepen immersion.
-✅ Example: Story Name: “Echoes of the Last Saint”
-A once-suppressed saint resurfaces—through fractured visions, possessed relics, and chanting children. The Ecclesiarchy labels the phenomena heresy, but a faction within the Adeptus Astra Telepathica believes it’s a warning. The players must investigate whether this resurrection is real, psychic manipulation, or daemonic mimicry.
+✅ Example: Story Name: "Echoes of the Last Saint"
+A once-suppressed saint resurfaces—through fractured visions, possessed relics, and chanting children. The Ecclesiarchy labels the phenomena heresy, but a faction within the Adeptus Astra Telepathica believes it's a warning. The players must investigate whether this resurrection is real, psychic manipulation, or daemonic mimicry.
 
 2. Core Conflict & Player Role
 
@@ -127,7 +136,7 @@ A power struggle unfolds between the Ordo Hereticus and a rogue Confessor.
 Civil unrest brews as pilgrims flock to worship an unknown image burned into the sky.
 3. Mystery & Complications
 
-All leads point to a “Saint Malkor,” a forgotten martyr who defied Inquisition orders.
+All leads point to a "Saint Malkor," a forgotten martyr who defied Inquisition orders.
 Data-tomes found suggest his last act was to seal a daemon in the flesh of a child.
 The possessed child now speaks prophecy… and reveals player secrets they never shared.
 4. Themes & Choices
@@ -162,7 +171,7 @@ Once a promising Archmagos in charge of warp-drive experimentation, Threx was ca
 
 A towering half-machine being, metal spine exposed and running with flickering red coolant.
 Speech consists of three overlapping voices: one human, one vox-distorted, one in binary.
-Deep paranoia veiled as “precautionary protocol adherence.”
+Deep paranoia veiled as "precautionary protocol adherence."
 3. Key Motivations & Story Purpose
 
 Seeking a lost STC he believes will trigger a new Dark Age—or enlightenment.
@@ -180,7 +189,13 @@ Secretly works with Drukhari fleshsmiths to perfect bio-mechanical immortality.
 
 """
 
-    return base_intro + context + examples
+    # Add a concluding instruction to reinforce the no-summary directive
+    final_reminder = """
+REMINDER: The generated content should end naturally after the last point or detail.
+DO NOT add any summary, conclusion, or recap at the end.
+"""
+
+    return base_intro + context + examples + final_reminder
 
 
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/generate', methods=['POST'])
@@ -200,19 +215,12 @@ def generate_campaign_content(campaign_id):
         .order_by(CampaignContent.created_at.asc())\
         .all()
     
-    # Decide whether context should be injected
-    description = data.get('description', '').lower()
-    needs_context = any(
-        keyword in description
-        for keyword in ['continue', 'reference', 'based on earlier', 'previous', 'context']
-    )
 
     # Build selective context
     context = ""
-    if selected_contents and needs_context:
-        context = "\n\nSelected campaign context:\n"
-        for content in selected_contents:
-            context += f"- {content.description}: {content.content}\n"
+    context = "\n\nSelected campaign context:\n"
+    for content in selected_contents:
+        context += f"- {content.description}: {content.content}\n"
 
       # Create a prompt using the provided description, parameters, and selected content
 #     prompt = f"""Generate campaign content for a tabletop RPG with the following parameters:
