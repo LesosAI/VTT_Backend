@@ -2,79 +2,70 @@ import requests
 import json
 import time
 
-def generate_map_art(api_key, description=""):
+def generate_map_art(api_key, description="", style="fantasy"):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
     
-    # Construct the prompt using the provided description
-    base_prompt = f"Generate a highly detailed fantasy D&D battle map from a top-down perspective. Description: {description}. "
-    style_prompt = "Include varied terrain like rivers, cliffs, forests, and ruins. Use illustrated cartographic symbols. Highly detailed, parchment-style, without grid lines."
+    # Shared style-independent prompt components
     view_prompt = "Must be a perfectly vertical top-down view, no tilt or perspective distortion."
     
-    # Combine prompts
+    # Dynamic prompting based on style
+    if style.lower() == "fantasy":
+        base_prompt = f"Generate a high-resolution illustrated fantasy D&D battle map. Description: {description}."
+        style_prompt = (
+            "Use parchment-style with intricate hand-drawn cartographic symbols. "
+            "Include varied terrain like forests, rivers, cliffs, mountains, caves, ruins, villages, and magical locations. "
+            "No grid lines, no perspective, ultra-sharp details, aged look."
+        )
+    elif style.lower() == "sci-fi":
+        base_prompt = f"Generate a sci-fi D&D top-down battle map. Description: {description}."
+        style_prompt = (
+            "Use futuristic cartographic symbols, top-down holographic interface style. "
+            "Include alien terrain, spaceports, domes, asteroid structures, lava rivers, or crashed ships. "
+            "No perspective, blueprint look or metallic grid texture, high contrast, glowing effects."
+        )
+    else:
+        raise ValueError("Invalid style. Use 'fantasy' or 'sci-fi'.")
+
+    # Combine all prompt parts
     full_prompt = f"{base_prompt} {style_prompt} {view_prompt}"
-    
-    # Request payload
-    payload = {  
-        # "alchemy": True,  
-        "height": 768,  
-        # "modelId": "aa77f04e-3eec-4034-9c07-d0f619684628",  
-        "modelId": "b2614463-296c-462a-9586-aafdb8f00e36",  
-        "num_images": 4,  
-        "presetStyle": "DYNAMIC",  
-        "prompt": full_prompt,  
-        "width": 1024,  
-        "userElements": [  
-            {  
-                "userLoraId": 55689, # fantasy 
-                # "userLoraId": 58095, # sci-fi 
-                "weight": 1  
-            }  
-        ]  
-    }  
-    
+
+    payload = {
+        "alchemy": True,
+        "height": 768,
+        "width": 1024,
+        "modelId": "aa77f04e-3eec-4034-9c07-d0f619684628",
+        "num_images": 4,
+        "presetStyle": "DYNAMIC",
+        "prompt": full_prompt,
+    }
+
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
         "authorization": f"Bearer {api_key}"
     }
-    
+
     try:
         response = requests.post(url, json=payload, headers=headers)
-        print(response.text)  # Debug print
         response.raise_for_status()
-        
-        # Get the generation ID from the response
         generation_id = response.json().get('sdGenerationJob', {}).get('generationId')
-        print(f"Generation ID: {generation_id}")  # Debug print
-        
-        # If we have a generation ID, fetch the results
+
         if generation_id:
-            # Poll for results with timeout
-            max_attempts = 30  # Maximum number of attempts
+            max_attempts = 30
             for attempt in range(max_attempts):
-                print(f"Checking attempt {attempt + 1}/{max_attempts}...")
-                
-                # Get the results
                 results_url = f"https://cloud.leonardo.ai/api/rest/v1/generations/{generation_id}"
                 results_response = requests.get(results_url, headers=headers)
                 results_response.raise_for_status()
-                
-                # Print raw response for debugging
-                print(f"Response: {results_response.json()}")
-                
-                # Extract image URLs from the response
                 generations = results_response.json().get('generations_by_pk', {})
                 if generations and generations.get('status') == 'COMPLETE':
                     image_urls = [gen.get('url') for gen in generations.get('generated_images', [])]
                     if image_urls:
-                        return image_urls[0]  # Return the first generated image URL
-                
-                # Wait before next attempt
-                time.sleep(5)  # Check every 5 seconds
-            
+                        return image_urls[0]
+                time.sleep(5)
+
             print("Timed out waiting for generation to complete")
             return None
-            
+
         return None
     except requests.exceptions.RequestException as e:
         print(f"Error making API request: {e}")

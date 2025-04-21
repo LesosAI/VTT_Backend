@@ -27,7 +27,7 @@ def generate_map():
         return jsonify({'error': 'Leonardo API key not configured'}), 500
 
     # Pass description to the generation function
-    image_url = generate_map_art(api_key, description)
+    image_url = generate_map_art(api_key, description, style)
     
     if not image_url:
         return jsonify({'error': 'Failed to generate map'}), 500
