@@ -139,7 +139,7 @@ camera framing to emphasize mood, depth, and detail.
         "ultra-detailed, cinematic lighting, atmospheric depth, highly dynamic pose, ",
         "photo-realistic textures, flowing fabrics, intricate armor, ornate accessories, ",
         "4K, sharp focus, dramatic shadows, golden hour or moody lighting, majestic scenery, ",
-        "dust particles, volumetric fog, epic background, stylized realism"
+        "epic background, stylized realism"
     )
 
     # Compose final GPT prompt
@@ -281,7 +281,7 @@ EACH PROMPT GENERATION MUST INCLUDE INSPIRED BY THE SETTING OF WARHAMMER 40K
         "high contrast lighting"
         "sci-fi ultra-detail, neon reflections, biomechanical textures, cinematic cyberpunk lighting, "
         "4K resolution, gritty or sterile futuristic environments (like starships, megacities, alien ruins), "
-        "realistic materials, glowing holograms, tactical gear, rain, smoke, HDR contrast, chromatic aberration"
+        "realistic materials, glowing holograms, tactical gear, rain, HDR contrast, chromatic aberration"
     )
 
     # Final input for ChatGPT
