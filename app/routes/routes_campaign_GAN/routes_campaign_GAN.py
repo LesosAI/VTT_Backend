@@ -117,38 +117,123 @@ A heretical prophecy claims Desoleum Exile will become the "New Throne" after Te
 
 """
 
-    elif category == "story":
+    elif category == "story/session":
         examples = """
 📜 Story Reference Example
-1. Narrative Arc Overview
 
-Define the central conflict and thematic underpinnings (corruption, fate, heresy, etc.).
-Clarify key factions and their motivations.
-Include player decision weight and long-term consequences.
-Embed mythos or esoteric elements to deepen immersion.
-✅ Example: Story Name: "Echoes of the Last Saint"
-A once-suppressed saint resurfaces—through fractured visions, possessed relics, and chanting children. The Ecclesiarchy labels the phenomena heresy, but a faction within the Adeptus Astra Telepathica believes it's a warning. The players must investigate whether this resurrection is real, psychic manipulation, or daemonic mimicry.
+Session Title
 
-2. Core Conflict & Player Role
+Example: Session 2 – The Blighted Oath
 
-The players receive coordinates to a silent monastery where the phenomenon began.
-A power struggle unfolds between the Ordo Hereticus and a rogue Confessor.
-Civil unrest brews as pilgrims flock to worship an unknown image burned into the sky.
-3. Mystery & Complications
+Session Focus / Objective
 
-All leads point to a "Saint Malkor," a forgotten martyr who defied Inquisition orders.
-Data-tomes found suggest his last act was to seal a daemon in the flesh of a child.
-The possessed child now speaks prophecy… and reveals player secrets they never shared.
-4. Themes & Choices
+What’s the main goal or theme of this session?
+Example: Investigate the blight spreading from the corrupted forest
+Example: Introduce Verdant Kin faction tensions
 
-Faith vs. Doubt: Do the players uphold Imperial Creed or investigate the truth?
-Mercy vs. Duty: Is the possessed child a threat or a misunderstood miracle?
-Control vs. Chaos: Will revealing the truth cause planetary schism?
-5. Escalation Hooks
+Setting / Scene Mood
 
-If the players preserve the child, rival factions will begin hunting them.
-If the relics are destroyed, a warp event may destabilize an entire sector.
-A Xenos observer (Eldar, Hrud?) may begin shadowing the party with unknown motives.
+Describe the setting, atmosphere, and environmental cues.
+Location: Name and description
+Mood: Emotional tone of the scene
+Sensory Details: Sounds, smells, visual motifs
+
+Featured Dialogue (NPC Hooks)
+
+Include a few key lines from important characters or narration.
+NPC Name (Faction or Title):
+"Memorable or foreboding quote."
+
+Mission Objective(s)
+
+Clearly defined session goals or tasks.
+Objective 1
+Objective 2
+Objective 3
+
+Mission Flow / Narrative Beats
+
+A roadmap of narrative beats. Can be non-linear.
+Scene or encounter 1
+Challenge or choice
+Conflict or moral dilemma
+Resolution or cliffhanger
+
+Key Discoveries
+
+Lore, secrets, or worldbuilding uncovered this session.
+Discovery 1
+Discovery 2
+Discovery 3
+
+Roleplay Moments
+
+Opportunities for strong character-driven moments.
+Decision points
+Relationship building
+PC backstory ties
+
+Encounter Ideas
+
+Combat or encounter notes.
+Encounter type and flavor
+Environmental challeng
+Optional boss or miniboss mechanics
+
+Seeds for Future Sessions
+
+Foreshadowing, consequences, or narrative threads to carry forward.
+Consequence of a decision
+New NPC introduced
+A growing threat or discovery
+GM Notes / Behind the Curtain
+
+Optional notes for yourself or AI: secrets, twists, or improvisation levers.
+
+Secret NPC motives
+Player backstory hooks
+Planned reveals or misdirection
+
+Character Spotlights 
+
+Focus moments for 1–2 PCs per session.
+PC Name: Specific vision, challenge, or development arc
+
+Faction Reactions
+
+How the major factions are reacting to the events of this session.
+Iron League: Reaction
+Verdant Kin: Reaction
+Sable Council: Reaction
+
+Rollable Flavor Table 
+
+Atmospheric or improvisational cues (e.g. whispers, omens, echoes).
+Example: Whispers of the Forest (d6):
+"The trees remember your name."
+"A face briefly forms in the bark—and vanishes."
+"The leaves fall in perfect silence, as if mourning."
+"A vine tries to hold your wrist gently."
+"Moss forms a strange rune overnight."
+"A soft weeping echoes with no source."
+
+Tactical / Map Notes
+
+Notes for combat terrain or visual layout .
+Terrain hazards
+Line of sight or movement issues
+Interactive elements (altars, roots, traps)
+
+Tone / Music Reference
+
+Optional ambient music or inspiration for mood-setting.
+Example: Hollow Knight OST, Ori and the Blind Forest
+
+Vision / Flashback Triggers
+
+Describe any visions or magical flashbacks tied to locations or artifacts.
+Trigger: Condition for the vision
+Content: What the player sees or feels
 
 """
 
