@@ -4,25 +4,31 @@ import time
 
 def generate_map_art(api_key, description="", style="fantasy"):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
-    
+
     # Shared style-independent prompt components
-    view_prompt = "Must be a perfectly vertical top-down view, no tilt or perspective distortion."
-    
+    view_prompt = (
+        "Strictly top-down view, aerial perspective, bird's-eye view, "
+        "orthographic projection, no tilt, no perspective distortion"
+        "No text, no symbol, no watermark."
+    )
+
     # Dynamic prompting based on style
     if style.lower() == "fantasy":
-        base_prompt = f"Generate a high-resolution illustrated fantasy D&D battle map. Description: {description}."
+        base_prompt = f"High-resolution illustrated fantasy top-view 2D D&D battle ground map. With Description: {description}."
         style_prompt = (
-            "Use parchment-style with intricate hand-drawn cartographic symbols. "
-            "Include varied terrain like forests, rivers, cliffs, mountains, caves, ruins, villages, and magical locations. "
-            "No grid lines, no perspective, ultra-sharp details, aged look."
+            "Parchment-style with intricate related objects and elements."
+            "Include varied terrain like forests, rivers, cliffs, mountains, caves, ruins, villages, and magical locations according to the description. In 2D top-down view. "
+            "No grid lines, ultra-sharp details, aged look."
         )
     elif style.lower() == "sci-fi":
-        base_prompt = f"Generate a sci-fi D&D top-down battle map. Description: {description}."
+        base_prompt = f"High-resolution sci-fi battleground map viewed strictly from above (2D orthographic). Description: {description}."
         style_prompt = (
-            "Use futuristic cartographic symbols, top-down holographic interface style. "
-            "Include alien terrain, spaceports, domes, asteroid structures, lava rivers, or crashed ships. "
-            "No perspective, blueprint look or metallic grid texture, high contrast, glowing effects."
+            "Use a top-down, futuristic holographic interface style with clean blueprint or metallic grid textures. "
+            "Include only relevant elements like alien terrain, spaceports, domes, asteroid structures, lava rivers, crashed ships, and high-tech ruins, as described. "
+            "No perspective distortion, no shadows suggesting depth, and absolutely no text, numbers, labels, signatures, logos, or watermarks. "
+            "Map must be purely environmental, viewed directly from above with glowing accents and sharp visual contrast."
         )
+
     else:
         raise ValueError("Invalid style. Use 'fantasy' or 'sci-fi'.")
 
@@ -37,6 +43,7 @@ def generate_map_art(api_key, description="", style="fantasy"):
         "num_images": 4,
         "presetStyle": "DYNAMIC",
         "prompt": full_prompt,
+        "negative_prompt": "text, words, symbols, labels, signature, watermark, compass, isometric view, perspective, tilt, shadows suggesting depth, 3D objects, modern elements, logos"
     }
 
     headers = {
