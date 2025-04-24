@@ -5,6 +5,7 @@ from flask import Blueprint, Flask, app, jsonify, redirect, request
 from flask_cors import CORS
 from flask_mail import Message
 from flask_sqlalchemy import SQLAlchemy
+import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
@@ -30,15 +31,14 @@ def send_verification_email():
     email = data.get('email')
     if not email:
         return jsonify({"error": "Email is required"}), 400
-
+    
     token = generate_verification_token(email)
-    verify_url = f"{os.getenv('DOMAIN')}/verify-email?token={token}"
-
-    msg = Message("Verify your email", recipients=[email])
-    msg.body = f"Please click the link to verify your email: {verify_url}"
-    mail.send(msg)
-
-    return jsonify({"message": "Verification email sent"}), 200
+    try:
+        send_verification_email_with_graph(email, token)
+        return jsonify({"message": "Verification email sent"}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Failed to send email"}), 500
 
 
 @api_login.route('/verify-email', methods=['GET'])
@@ -56,6 +56,111 @@ def verify_email():
     except Exception as e:
         print(e)
         return jsonify({"error": "Invalid or expired token"}), 400
+
+
+def get_access_token():
+    tenant_id = os.getenv("TENANT_ID")
+    client_id = os.getenv("CLIENT_ID")
+    client_secret = os.getenv("CLIENT_SECRET")
+
+    url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+
+    payload = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "scope": "https://graph.microsoft.com/.default",
+        "grant_type": "client_credentials",
+    }
+
+    response = requests.post(url, data=payload)
+    print(f"Response text: {response.text}")
+    response.raise_for_status()
+    return response.json()["access_token"]
+
+def send_verification_email_with_graph(recipient_email, token):
+    access_token = get_access_token()
+    sender_email = os.getenv("SENDER_EMAIL")
+    verify_url = f"{os.getenv('DOMAIN')}/verify-email?token={token}"
+
+    html_content = f"""
+    <html>
+    <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: 'Segoe UI', sans-serif; color: #e5e7eb;">
+        <center style="width: 100%; table-layout: fixed; background-color: #0f172a; padding: 40px 0;">
+        <div style="max-width: 600px; margin: auto; background-color: #1e1b2e; padding: 30px; border-radius: 12px;">
+            
+            <!-- Logo -->
+            <table role="presentation" width="100%" style="margin-bottom: 30px;">
+            <tr>
+                <td align="center">
+                <img src="https://www.forgelab.pro/_next/image?url=%2FForgeLabsLogo.png&w=750&q=75&dpl=dpl_6vbAiZYyLAhMyJ4wEbYm3wB84kXi" alt="ForgeLab Logo" style="height: 200px;" />
+                </td>
+            </tr>
+            </table>
+
+            <!-- Welcome Text -->
+            <h2 style="color: #a78bfa; text-align: center; font-size: 24px; margin: 0 0 20px;">Welcome to ForgeLab</h2>
+            <p style="font-size: 16px; line-height: 1.6; text-align: center;">
+            You’re almost there. Confirm your email to begin exploring worlds, shaping characters, and crafting unforgettable stories with ForgeLab.
+            </p>
+
+            <!-- Bulletproof Button -->
+            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin: 30px auto;">
+            <tr>
+                <td bgcolor="#111827" style="border-radius: 8px; text-align: center;">
+                <a href="{verify_url}" style="display: inline-block; padding: 14px 28px; font-size: 15px; color: #ffffff; background-color: #111827; border: 1px solid #a78bfa; text-decoration: none; font-weight: 600; border-radius: 8px;">
+                    Verify My Email
+                </a>
+                </td>
+            </tr>
+            </table>
+
+            <!-- Link Alternative -->
+            <p style="font-size: 14px; color: #cbd5e1; margin-top: 40px;">
+            Or copy and paste this link into your browser:
+            </p>
+            <p style="word-break: break-all;">
+            <a href="{verify_url}" style="color: #a78bfa;">{verify_url}</a>
+            </p>
+
+            <!-- Footer -->
+            <p style="margin-top: 40px; font-size: 14px; color: #94a3b8; text-align: center;">
+            If you didn't create a ForgeLab account, you can ignore this email.<br />
+            — The ForgeLab Team
+            </p>
+
+        </div>
+        </center>
+    </body>
+    </html>
+    """
+
+    email_msg = {
+        "message": {
+            "subject": "ForgeLab | Verify Your Email",
+            "body": {
+                "contentType": "HTML",
+                "content": html_content,
+            },
+            "toRecipients": [
+                {"emailAddress": {"address": recipient_email}}
+            ],
+        },
+        "saveToSentItems": "false"
+    }
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(
+        f"https://graph.microsoft.com/v1.0/users/{sender_email}/sendMail",
+        headers=headers,
+        json=email_msg
+    )
+
+    if response.status_code != 202:
+        raise Exception(f"Email failed: {response.text}")
 
 
 
