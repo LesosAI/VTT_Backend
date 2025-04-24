@@ -22,8 +22,11 @@ api_login = Blueprint("login", __name__, url_prefix="")
 
 serializer = URLSafeTimedSerializer(os.getenv('SECRET_KEY'))
 
-def generate_verification_token(email):
-    return serializer.dumps(email, salt="email-confirm")
+def generate_verification_token(email: str, purpose: str):
+    if purpose == "email-confirm":
+        return serializer.dumps(email, salt=purpose)
+    elif purpose == "reset_password":
+        return serializer.dumps(email, salt=purpose)
 
 @api_login.route('/send-verification', methods=['POST'])
 def send_verification_email():
@@ -32,7 +35,7 @@ def send_verification_email():
     if not email:
         return jsonify({"error": "Email is required"}), 400
     
-    token = generate_verification_token(email)
+    token = generate_verification_token(email, purpose="email-confirm")
     try:
         send_verification_email_with_graph(email, token)
         return jsonify({"message": "Verification email sent"}), 200
@@ -224,6 +227,127 @@ def login():
         "is_subaccount": user.is_subaccount
     }), 200
 
+
+@api_login.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    email = data.get("email")
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"success": False, "error": "No user found with this email."}), 404
+
+    token = generate_verification_token(email, purpose="reset_password")
+    send_password_reset_email_with_graph(email, token)
+    return jsonify({"success": True, "message": "Password reset email sent."})
+
+@api_login.route("/reset-password", methods=["POST"])
+def reset_password():
+    try:
+        data = request.get_json()
+        token = data.get("token")
+        new_password = data.get("password")
+
+        email = serializer.loads(token, salt="reset_password", max_age=3600)
+        if not email:
+            return jsonify({"success": False, "error": "Invalid or expired token."}), 400
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({"success": False, "error": "User not found."}), 404
+
+        user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+
+        return jsonify({"success": True, "message": "Password updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+def send_password_reset_email_with_graph(recipient_email, token):
+    access_token = get_access_token()
+    sender_email = os.getenv("SENDER_EMAIL")
+    reset_url = f"{os.getenv('DOMAIN')}/reset-password?token={token}"
+
+    html_content = f"""
+    <html>
+      <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: 'Segoe UI', sans-serif; color: #e5e7eb;">
+        <center style="width: 100%; table-layout: fixed; background-color: #0f172a; padding: 40px 0;">
+          <div style="max-width: 600px; margin: auto; background-color: #1e1b2e; padding: 30px; border-radius: 12px;">
+            
+            <!-- Logo -->
+            <table role="presentation" width="100%" style="margin-bottom: 30px;">
+              <tr>
+                <td align="center">
+                  <img src="https://www.forgelab.pro/_next/image?url=%2FForgeLabsLogo.png&w=750&q=75&dpl=dpl_6vbAiZYyLAhMyJ4wEbYm3wB84kXi" alt="ForgeLab Logo" style="height: 200px;" />
+                </td>
+              </tr>
+            </table>
+
+            <!-- Title -->
+            <h2 style="color: #a78bfa; text-align: center; font-size: 24px; margin: 0 0 20px;">Reset Your Password</h2>
+            <p style="font-size: 16px; line-height: 1.6; text-align: center;">
+              We received a request to reset your password. Click the button below to create a new one.
+              This link is valid for a limited time only.
+            </p>
+
+            <!-- Button -->
+            <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin: 30px auto;">
+              <tr>
+                <td bgcolor="#111827" style="border-radius: 8px; text-align: center;">
+                  <a href="{reset_url}" style="display: inline-block; padding: 14px 28px; font-size: 15px; color: #ffffff; background-color: #111827; border: 1px solid #a78bfa; text-decoration: none; font-weight: 600; border-radius: 8px;">
+                    Reset My Password
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Fallback Link -->
+            <p style="font-size: 14px; color: #cbd5e1; margin-top: 40px;">
+              Or copy and paste this link into your browser:
+            </p>
+            <p style="word-break: break-all;">
+              <a href="{reset_url}" style="color: #a78bfa;">{reset_url}</a>
+            </p>
+
+            <!-- Footer -->
+            <p style="margin-top: 40px; font-size: 14px; color: #94a3b8; text-align: center;">
+              If you didn't request a password reset, you can safely ignore this email.<br />
+              — The ForgeLab Team
+            </p>
+          </div>
+        </center>
+      </body>
+    </html>
+    """
+
+    email_msg = {
+        "message": {
+            "subject": "ForgeLab | Reset Your Password",
+            "body": {
+                "contentType": "HTML",
+                "content": html_content,
+            },
+            "toRecipients": [
+                {"emailAddress": {"address": recipient_email}}
+            ],
+        },
+        "saveToSentItems": "false"
+    }
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(
+        f"https://graph.microsoft.com/v1.0/users/{sender_email}/sendMail",
+        headers=headers,
+        json=email_msg
+    )
+
+    if response.status_code != 202:
+        raise Exception(f"Password reset email failed: {response.text}")
 
 
 
