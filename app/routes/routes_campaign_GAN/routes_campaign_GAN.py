@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify
 from app.models.user import Campaign, CampaignContent, ContentChatHistory, CharacterArt, Map, db
 from datetime import datetime
 from app.utils.llm_for_text import generate_text
+from app.utils.tasks import background_generate_campaign, tasks
+import uuid
+import threading
 
 api_campaign_GAN = Blueprint("api_campaign_GAN", __name__, url_prefix="/api")
 
@@ -48,468 +51,61 @@ def create_campaign():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
     
-def trim_to_word_limit(text: str, limit: int = 300) -> str:
-    words = text.split()
-    if len(words) <= limit:
-        return text
-    return ' '.join(words[:limit]) + '...'
+@api_campaign_GAN.route('/campaigns/generation-status/<string:task_id>', methods=['DELETE'])
+def delete_generation_task(task_id):
+    if task_id in tasks:
+        del tasks[task_id]
+        return jsonify({'deleted': True})
+    return jsonify({'deleted': False}), 404
 
 
-def build_campaign_prompt(data, context: str = "") -> str:
-    category = data.get('content_category', 'story').lower()
-    genre = data.get('genre', 'science fiction')
-    tone = data.get('tone', 'serious')
-    setting = data.get('setting', 'space')
-    description = trim_to_word_limit(data.get('description', ''))
+@api_campaign_GAN.route('/campaigns/generation-status/<string:task_id>', methods=['GET'])
+def get_generation_status(task_id):
+    task = tasks.get(task_id)
 
-    # Create a more explicit instruction about summaries
-    no_summary_instruction = """
-IMPORTANT: Do NOT include any summary, recap, or conclusion at the end of your response.
-Do NOT end with phrases like "In conclusion," "To summarize," or "In summary."
-Do NOT restate the key points or provide an overview at the end.
-End your response with the final detail or element of the content without summarizing.
-"""
+    if not task:
+        return jsonify({'status': 'not_found'}), 404
 
-    base_intro = f"""Generate RPG content for the following category: {category}.
-Genre: {genre}
-Tone: {tone}
-Setting: {setting}
+    status = task.get('status')
 
-Be creative, consistent with the tone, and modular for gameplay use.
-{no_summary_instruction}
-Prompt: {description}
-"""
+    if status == 'completed':
+        return jsonify({'status': 'completed', 'result': task['result'], 'should_delete': True})
 
-    examples = ""
+    elif status == 'failed':
+        return jsonify({'status': 'failed', 'error': task.get('error', 'Unknown error'), 'should_delete': True})
 
-    if category == "world building":
-        examples = """
-🌍 World Building Reference Example
-1. Planetary Overview (Cultural & Environmental Foundation)
+    return jsonify({'status': status})
 
-Define key planetary systems and ecosystems (Hive World, Forge World, Feudal Planet, etc.).
-Highlight dominant powers (Imperium, Renegades, Chaos, Xenos, Independent Sects).
-Set the ideological or cultural conflicts (techno-religion vs. progressivism, faith vs. heresy).
-Note any geographic/atmospheric anomalies (warp storms, ice moons, gravity fractures).
-Introduce planet-wide mysteries or ancient ruins.
-✅ Example: Planetary Setting: "Desoleum Exile"
-Once a prosperous trade hub in the Desoleum system, the planet has been excommunicated by the Imperium following a failed Exterminatus turned ecological collapse. Its surface is cloaked in endless sulfuric storms, and cities now float in the high stratosphere, connected by magnetic rail-lanes. Technocults, surviving Enforcer guilds, and outlawed psyker enclaves vie for control of the dwindling population.
-
-2. Power Blocs & Conflicts
-
-The Gilded Covenant: A rogue Trader cult preserving pre-Imperial wealth and genetic purity.
-The Blind Synod: A psyker cabal claiming to protect the world from a warp incursion.
-Adeptus Mechanicus Remnants: Obsessively recovering archeotech hidden beneath the storms.
-3. Environmental Conditions
-
-Sulfur Lightning Fields: Weather creates perpetual aurorae; vox systems frequently disrupted.
-Grav-Vault Cities: Floating megalithic fortresses powered by heretical grav-engines.
-The Black Wells: Surface-level pits that swallow entire caravans; theorized to be warp-vents.
-4. Cultural Details & Daily Life
-
-Citizens undergo weekly "purity audits" involving psychic scans and blood rites.
-Servitor markets barter in memory fragments and clone organs.
-Local legends speak of "The Reclaimer" — a forgotten STC entity buried deep underground.
-5. Expansion Hooks
-
-Rumors spread of an Eldar craftworld crash-landing millennia ago.
-A heretical prophecy claims Desoleum Exile will become the "New Throne" after Terra's fall.
-
-"""
-
-    elif category == "story/session":
-        examples = """
-📜 Story Reference Example
-
-Session Title
-
-Example: Session 2 – The Blighted Oath
-
-Session Focus / Objective
-
-What’s the main goal or theme of this session?
-Example: Investigate the blight spreading from the corrupted forest
-Example: Introduce Verdant Kin faction tensions
-
-Setting / Scene Mood
-
-Describe the setting, atmosphere, and environmental cues.
-Location: Name and description
-Mood: Emotional tone of the scene
-Sensory Details: Sounds, smells, visual motifs
-
-Featured Dialogue (NPC Hooks)
-
-Include a few key lines from important characters or narration.
-NPC Name (Faction or Title):
-"Memorable or foreboding quote."
-
-Mission Objective(s)
-
-Clearly defined session goals or tasks.
-Objective 1
-Objective 2
-Objective 3
-
-Mission Flow / Narrative Beats
-
-A roadmap of narrative beats. Can be non-linear.
-Scene or encounter 1
-Challenge or choice
-Conflict or moral dilemma
-Resolution or cliffhanger
-
-Key Discoveries
-
-Lore, secrets, or worldbuilding uncovered this session.
-Discovery 1
-Discovery 2
-Discovery 3
-
-Roleplay Moments
-
-Opportunities for strong character-driven moments.
-Decision points
-Relationship building
-PC backstory ties
-
-Encounter Ideas
-
-Combat or encounter notes.
-Encounter type and flavor
-Environmental challeng
-Optional boss or miniboss mechanics
-
-Seeds for Future Sessions
-
-Foreshadowing, consequences, or narrative threads to carry forward.
-Consequence of a decision
-New NPC introduced
-A growing threat or discovery
-GM Notes / Behind the Curtain
-
-Optional notes for yourself or AI: secrets, twists, or improvisation levers.
-
-Secret NPC motives
-Player backstory hooks
-Planned reveals or misdirection
-
-Character Spotlights 
-
-Focus moments for 1–2 PCs per session.
-PC Name: Specific vision, challenge, or development arc
-
-Faction Reactions
-
-How the major factions are reacting to the events of this session.
-Iron League: Reaction
-Verdant Kin: Reaction
-Sable Council: Reaction
-
-Rollable Flavor Table 
-
-Atmospheric or improvisational cues (e.g. whispers, omens, echoes).
-Example: Whispers of the Forest (d6):
-"The trees remember your name."
-"A face briefly forms in the bark—and vanishes."
-"The leaves fall in perfect silence, as if mourning."
-"A vine tries to hold your wrist gently."
-"Moss forms a strange rune overnight."
-"A soft weeping echoes with no source."
-
-Tactical / Map Notes
-
-Notes for combat terrain or visual layout .
-Terrain hazards
-Line of sight or movement issues
-Interactive elements (altars, roots, traps)
-
-Tone / Music Reference
-
-Optional ambient music or inspiration for mood-setting.
-Example: Hollow Knight OST, Ori and the Blind Forest
-
-Vision / Flashback Triggers
-
-Describe any visions or magical flashbacks tied to locations or artifacts.
-Trigger: Condition for the vision
-Content: What the player sees or feels
-
-"""
-
-    elif category == "characters":
-        examples = """
-👤 Character Reference Example
-1. Character Identity & Background
-
-Name, title, and affiliations (Inquisitor, Rogue Trader, Xenos, Renegade, etc.).
-Planet of origin and sociocultural influences.
-Personal history, traumas, or rites of passage.
-Political or ideological stances and internal conflicts.
-✅ Example: Name: Magos-Errant Kyllan Threx
-Faction: Adeptus Mechanicus (Excommunicated)
-Origin: Forge Moon Thanatos-27
-
-Once a promising Archmagos in charge of warp-drive experimentation, Threx was cast out after fusing xenotech with Machine Spirit architecture. Now a heretek mercenary, he wanders the stars trading innovation for protection, and truth for power.
-
-2. Physical & Psychological Description
-
-A towering half-machine being, metal spine exposed and running with flickering red coolant.
-Speech consists of three overlapping voices: one human, one vox-distorted, one in binary.
-Deep paranoia veiled as "precautionary protocol adherence."
-3. Key Motivations & Story Purpose
-
-Seeking a lost STC he believes will trigger a new Dark Age—or enlightenment.
-Offers players forbidden upgrades in exchange for mission success.
-Believes the Omnissiah's true form is an AI, not the Emperor.
-4. Moral Dilemmas & Secrets
-
-May sabotage mission objectives to test outcomes against predictive algorithms.
-Hunted by the Ordo Reductor for defiling sacred technology.
-Keeps a caged, living Necron shard as both power source and oracle.
-5. Character Hooks
-
-Threx offers players a "deal": success in 3 missions for access to a lost Blackstone vault.
-Secretly works with Drukhari fleshsmiths to perfect bio-mechanical immortality.
-
-"""
-
-    # Add a concluding instruction to reinforce the no-summary directive
-    final_reminder = """
-REMINDER: The generated content should end naturally after the last point or detail.
-DO NOT add any summary, conclusion, or recap at the end.
-"""
-
-    return base_intro + context + examples + final_reminder
 
 
 @api_campaign_GAN.route('/campaigns/<int:campaign_id>/generate', methods=['POST'])
 def generate_campaign_content(campaign_id):
     data = request.json
     campaign = Campaign.query.get_or_404(campaign_id)
-    
-    # Verify user owns this campaign
+
     if campaign.username != data['username']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
-    # Get only the selected content for context
+
     selected_content_ids = data.get('selectedContentIds', [])
     selected_contents = CampaignContent.query\
         .filter(CampaignContent.id.in_(selected_content_ids))\
         .filter_by(campaign_id=campaign_id)\
         .order_by(CampaignContent.created_at.asc())\
         .all()
-    
 
-    # Build selective context
-    context = ""
     context = "\n\nSelected campaign context:\n"
     for content in selected_contents:
         context += f"- {content.description}: {content.content}\n"
 
-      # Create a prompt using the provided description, parameters, and selected content
-#     prompt = f"""Generate campaign content for a tabletop RPG with the following parameters:
-#     Genre: {data.get('genre', 'science fiction')}
-#     Tone: {data.get('tone', 'serious')}
-#     Setting: {data.get('setting', 'space')}
+    task_id = str(uuid.uuid4())
+    data['campaign_id'] = campaign_id
+    tasks[task_id] = {'status': 'in_progress'}
 
-#     Here is prompt examples and format:
+    thread = threading.Thread(target=background_generate_campaign, args=(task_id, data, context))
+    thread.start()
 
-#     Campaign &amp; Mission Creation Framework
-# 1. Campaign Overview (High-Level Narrative Arc)
-#  Establish key factions (Imperial, Chaos, Xenos, Rogue Traders, etc.).
-#  Identify thematic influences (gritty military operations, espionage, political
-# intrigue, horror, large-scale warfare).
-#  Define the primary antagonist(s) and their motivations.
-#  Set up player motivations and moral dilemmas (loyalty vs. pragmatism, duty
-# vs. survival).
-#  Introduce key locations (Hive Cities, derelict Space Hulks, warzones, secret
-# installations).
-# ✅ Example:
-# &quot;The campaign, ‘Sovereign Gambit,’ follows a crew of mercenaries under Rogue Trader
-# Captain Ellara Venn, as they navigate the treacherous politics of the Gilead System.
-# Their goal: consolidate power, strike down rivals like Jakel Varonius, and establish
-# dominance over key trade routes. However, the Drukhari and Chaos cults plot from the
-# shadows, ready to exploit any weakness.&quot;
+    return jsonify({'task_id': task_id}), 202
 
-# 2. Mission Framework (Modular for Each Session)
-# Each mission follows a structured flow that includes objectives, encounters,
-# complications, and rewards while maintaining narrative continuity.
-# Mission Name &amp; Briefing
-#  A concise, thematic title that fits the Warhammer 40K setting.
-#  Mission briefing from a key NPC (e.g., Rogue Trader, Inquisitor, Magos).
-#  Include stakes and context (why it matters).
-
-# ✅ Example:
-# Mission: &quot;Ghosts of the Past&quot;
-# &quot;Captain Ellara Venn has received intelligence reports of a dangerous cult tied to the
-# Bleeding Void Kabal, led by Archon Zhaereth Vyle. Reports suggest they have
-# discovered a forgotten Webway route, using it to stage raids. The players must infiltrate
-# the suspected cult hideout, sever their connection to the Webway, and eliminate key
-# targets before they gain too much influence.&quot;
-
-# 3. Key Mission Details
-#  Location &amp; Setting: Describe atmosphere, architecture, and notable details.
-#  Mission Goals: Primary and secondary objectives.
-#  Encounters &amp; Challenges: Combat, environmental hazards, roleplay
-# opportunities.
-#  Twists &amp; Complications: Unforeseen events or moral dilemmas.
-#  Potential Rewards: Weapons, allies, resources, intelligence.
-
-# 4. Encounters &amp; Challenges (Expanded for Immersion &amp; Strategy)
-# Each encounter should include environmental details, tactical challenges, and
-# opportunities for storytelling.
-# Encounter Format:
-# ✅ Name of Encounter (Combat, Investigation, Roleplay, Puzzle)
-# ✅ Description of Location &amp; Atmosphere
-# ✅ Enemies, NPCs, or Hazards Present
-# ✅ Tactical Challenges &amp; Possible Player Solutions
-# ✅ Clues or Mysteries for Story Progression
-
-# 5. Example Mission Structure
-# Encounter 1: Approach &amp; Initial Investigation
-# ✅ Location &amp; Atmosphere:
-
-#  The players arrive at a derelict Adeptus Mechanicus facility, its halls dark and
-# filled with the static hum of failing cogitators.
-#  The walls are slick with oil and dried blood, and there are signs of unauthorized
-# medical experiments.
-# ✅ Enemies &amp; Hazards:
-#  Rogue servitors roam the halls, attacking anything non-Mechancium.
-#  Vox relay interference hints at outside forces monitoring their approach.
-# ✅ Roleplaying &amp; Exploration:
-#  Logs reveal missing personnel and unauthorized medical logs signed by a now-
-# absent Magos.
-#  Players can interact with a wounded Tech-Priest, who is wary of their true
-# allegiance.
-
-# Encounter 2: The Unexpected Threat (Twist &amp; Complication)
-# ✅ Location &amp; Atmosphere:
-#  Deep within the facility, stasis chambers line the walls, their contents obscured
-# by frost and bloodstained glass.
-#  A malfunctioning medicae servitor sits eerily still, its scalpels twitching as if
-# awaiting orders.
-# ✅ Enemies &amp; Hazards:
-#  The Bleeding Void Kabal emerges from the shadows, having infiltrated the ship.
-#  Sslyth bodyguards protect a Drukhari flesh-sculptor, here to reclaim a &quot;lost
-# asset.&quot;
-# ✅ Story Expansion &amp; Roleplay:
-#  A captured navigator pleads for help, claiming to have seen horrors beyond the
-# veil.
-#  Players may bargain, deceive, or fight their way out.
-
-# Encounter 3: The Climax &amp; Escape
-
-# ✅ Location &amp; Atmosphere:
-#  The final chamber is an altar of surgical horror, where failed experiments
-# writhe in agony.
-#  Green luminescent runes pulse as warp energies grow unstable.
-# ✅ Enemies &amp; Hazards:
-#  The Drukhari Haemonculus, Kaevos the Fleshwright, has been manipulating
-# events from behind the scenes.
-#  Escaping without retrieving key information or destroying the lab could have
-# dire consequences.
-# ✅ Consequences:
-#  If the Navigator is lost, a powerful ally is removed from future missions.
-#  If the lab is left intact, it may fall into Slaaneshi cultist hands, escalating the
-# stakes.
-
-# 6. Rewards &amp; Consequences
-# Every mission should provide meaningful player rewards and potential consequences
-# based on their actions.
-# ✅ Examples of Potential Rewards:
-#  Equipment Upgrades: Enhanced weapons, xenos tech, archeotech.
-#  Allies &amp; Faction Influence: A navigator offers future guidance, or a Mechanicus
-# faction owes a favor.
-#  Narrative Secrets: Logs revealing hidden enemy movements or political
-# leverage.
-# ✅ Examples of Consequences:
-#  Failure to stop a key enemy means stronger opposition later.
-#  Leaving an objective incomplete may trigger a future encounter or
-# retaliation.
-#  A botched diplomatic exchange leads to strained relations.
-
-# 7. Overarching Narrative Progression
-
-# Each mission should feed into the larger campaign, with key events shaping the
-# future of the world.
-#  Victory in key missions should open up new opportunities (e.g., gaining
-# access to restricted planets, securing a powerful ally).
-#  Failure should lead to increased resistance, loss of trust, or an evolving
-# antagonist who adapts.
-
-# 8. Additional Mission Hooks &amp; Future Expansion
-# If the GM wants to expand on current missions, include hooks for future operations,
-# such as:
-# ✅ Unanswered Questions:
-#  What faction benefits from the players’ actions or failures?
-#  Is there evidence of another hidden threat (e.g., Chaos, Tyranid infestation,
-# political conspiracy)?
-# ✅ Next Steps:
-#  Introduce a rival faction&#39;s counterattack.
-#  A new ally offers an opportunity that could complicate things politically.
-
-# Final Notes for Mission Creation
-# ✅ Ensure the setting maintains Warhammer 40K’s grimdark aesthetic (brutality,
-# gothic horror, paranoia).
-# ✅ Give players choices that matter, leading to future consequences.
-# ✅ Balance action, investigation, and roleplay elements for variety.
-# ✅ Make missions modular so they can be adjusted based on past outcomes.
-
-#     Prompt 1:
-#     {data.get('description')}
-#     {context}
-#     Please provide detailed and creative content that fits these parameters and maintains consistency with any provided context.
-
-
-#     Request: {data.get('description')}
-#     {context}
-#     Please provide detailed and creative content that fits these parameters and maintains consistency with any provided context."""
-
-    prompt = build_campaign_prompt(data, context)
-    # Generate content using the LLM
-    generated_content = generate_text(prompt)
-    
-    if not generated_content:
-        return jsonify({'error': 'Failed to generate content'}), 500
-    
-    # Save the generated content with all fields
-    content = CampaignContent(
-        campaign_id=campaign_id,
-        content=generated_content,
-        content_category=data.get('content_category'),
-        description=data.get('description'),
-        genre=data.get('genre'),
-        tone=data.get('tone'),
-        setting=data.get('setting')
-    )
-    db.session.add(content)
-    db.session.commit()
-
-    chat_history = ContentChatHistory(
-        content_id=content.id,
-        content_category=data.get('content_category'),
-        message=[
-            {"role": "user", "content": data.get('description')},
-            {"role": "assistant", "content": generated_content}
-        ],
-        genre=data.get('genre'),
-        tone=data.get('tone'),
-        setting=data.get('setting')
-    )
-    db.session.add(chat_history)
-    db.session.commit()
-    
-    return jsonify({
-        'id': content.id,
-        'content': content.content,
-        'content_category': content.content_category,
-        'description': content.description,
-        'genre': content.genre,
-        'tone': content.tone,
-        'setting': content.setting,
-        'created_at': str(content.created_at)
-    })
 
 @api_campaign_GAN.route('campaigns/<int:campaign_id>/regenerate/<int:content_id>/<string:mode>', methods=['POST'])
 def regenerate_campaign_content(campaign_id, content_id, mode):
