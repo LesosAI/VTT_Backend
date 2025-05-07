@@ -5,45 +5,28 @@ import time
 def generate_map_art(api_key, description="", style="fantasy"):
     url = "https://cloud.leonardo.ai/api/rest/v1/generations"
 
-    # Shared style-independent prompt components
-    view_prompt = (
-        "Strictly top-down view, aerial perspective, bird's-eye view, "
-        "orthographic projection, no tilt, no perspective distortion"
-        "No text, no symbol, no watermark."
-    )
-
-    # Dynamic prompting based on style
+    # Combine prompts
+    full_prompt = f"{description}. The map should include clear details of terrain, landmarks, and structures which are related. High quality, detailed cartography style. DO NOT INCLUDE GRID LINES"
+    if style.lower() == "sci-fi":
+        lora = 64561
     if style.lower() == "fantasy":
-        base_prompt = f"High-resolution illustrated fantasy top-view 2D D&D battle ground map. With Description: {description}."
-        style_prompt = (
-            "Parchment-style with intricate related objects and elements."
-            "Include varied terrain like forests, rivers, cliffs, mountains, caves, ruins, villages, and magical locations according to the description. In 2D top-down view. "
-            "No grid lines, ultra-sharp details, aged look."
-        )
-    elif style.lower() == "sci-fi":
-        base_prompt = f"High-resolution sci-fi battleground map viewed strictly from above (2D orthographic). Description: {description}."
-        style_prompt = (
-            "Use a top-down, futuristic holographic interface style with clean blueprint or metallic grid textures. "
-            "Include only relevant elements like alien terrain, spaceports, domes, asteroid structures, lava rivers, crashed ships, and high-tech ruins, as described. "
-            "No perspective distortion, no shadows suggesting depth, and absolutely no text, numbers, labels, signatures, logos, or watermarks. "
-            "Map must be purely environmental, viewed directly from above with glowing accents and sharp visual contrast."
-        )
-
-    else:
-        raise ValueError("Invalid style. Use 'fantasy' or 'sci-fi'.")
-
-    # Combine all prompt parts
-    full_prompt = f"{base_prompt} {style_prompt} {view_prompt}"
+        lora = 64242
 
     payload = {
         "alchemy": True,
         "height": 768,
         "width": 1024,
         "modelId": "aa77f04e-3eec-4034-9c07-d0f619684628",
-        "num_images": 4,
+        "num_images": 1,
+        "seed": 4406956102,
         "presetStyle": "DYNAMIC",
         "prompt": full_prompt,
-        "negative_prompt": "text, words, symbols, labels, signature, watermark, compass, isometric view, perspective, tilt, shadows suggesting depth, 3D objects, modern elements, logos"
+        "userElements": [  
+            {  
+                "userLoraId": lora,  
+                "weight": 1  
+            }  
+        ]  
     }
 
     headers = {
