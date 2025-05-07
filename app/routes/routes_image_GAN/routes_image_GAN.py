@@ -1,3 +1,5 @@
+import threading
+import uuid
 from flask import Blueprint, request, jsonify, send_file, make_response, current_app
 from app.models.user import CharacterArt, User, db, Tag, Map
 import requests
@@ -8,6 +10,7 @@ import time
 import os
 from app.utils.davinco_microservice.use_lora.use_lora import generate_character_art
 from app.utils.llm_for_text import generate_text
+from app.utils.tasks import background_generate_image, tasks
 api_image_GAN = Blueprint("api_image_GAN", __name__, url_prefix="/api")
 
 
@@ -298,66 +301,78 @@ EACH PROMPT GENERATION MUST INCLUDE INSPIRED BY THE SETTING OF WARHAMMER 40K
 
     return prompt
 
-
 @api_image_GAN.route('/generate-image', methods=['POST'])
 def generate_image():
     data = request.json
-    username = data.get('username')
-    description = data.get('description')
-    style = data.get('style')
+    task_id = str(uuid.uuid4())
 
-    print(style)
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
+    tasks[task_id] = {'status': 'pending'}
 
-    # Get Leonardo API key from environment
-    api_key = os.getenv('LEONARDO_API_KEY')
-    if not api_key:
-        return jsonify({'error': 'Leonardo API key not configured'}), 500
+    thread = threading.Thread(target=background_generate_image, args=(task_id, data))
+    thread.start()
 
-    if style == "fantasy":
-        prompt = generate_prompt_fantasy(description)
-    elif style == "sci-fi":
-        prompt = generate_prompt_scifi(description)
-    else:
-        prompt = description
-    print(prompt)
-
-    if len(prompt) > 1420:
-        prompt = prompt[:1420]
+    return jsonify({'task_id': task_id}), 202
 
 
-    # prompt= f"Ensure you have the correct number of limbs and eyes, and the correct number of limbs, and the correct number of eyes {prompt}"
-    # Generate image using Leonardo AI with the description
-    image_urls = generate_character_art(api_key, prompt)
-    if not image_urls:
-        return jsonify({'error': 'Failed to generate image'}), 500
+# @api_image_GAN.route('/generate-image', methods=['POST'])
+# def generate_image():
+#     data = request.json
+#     username = data.get('username')
+#     description = data.get('description')
+#     style = data.get('style')
 
-    image_url = image_urls[0]  # Take the first generated image
-    print(image_url)
-    # Create new character art entry
-    character_art = CharacterArt(
-        username=username,
-        image_url=image_url,
-        description=description,
-        style=style,
-    )
+#     print(style)
+#     if not username:
+#         return jsonify({'error': 'Username is required'}), 400
+
+#     # Get Leonardo API key from environment
+#     api_key = os.getenv('LEONARDO_API_KEY')
+#     if not api_key:
+#         return jsonify({'error': 'Leonardo API key not configured'}), 500
+
+#     if style == "fantasy":
+#         prompt = generate_prompt_fantasy(description)
+#     elif style == "sci-fi":
+#         prompt = generate_prompt_scifi(description)
+#     else:
+#         prompt = description
+#     print(prompt)
+
+#     if len(prompt) > 1420:
+#         prompt = prompt[:1420]
+
+
+#     # prompt= f"Ensure you have the correct number of limbs and eyes, and the correct number of limbs, and the correct number of eyes {prompt}"
+#     # Generate image using Leonardo AI with the description
+#     image_urls = generate_character_art(api_key, prompt)
+#     if not image_urls:
+#         return jsonify({'error': 'Failed to generate image'}), 500
+
+#     image_url = image_urls[0]  # Take the first generated image
+#     print(image_url)
+#     # Create new character art entry
+#     character_art = CharacterArt(
+#         username=username,
+#         image_url=image_url,
+#         description=description,
+#         style=style,
+#     )
     
-    try:
-        db.session.add(character_art)
+#     try:
+#         db.session.add(character_art)
         
-        # Add tags
+#         # Add tags
             
-        db.session.commit()
+#         db.session.commit()
         
-        return jsonify({
-            'success': True,
-            'image_url': image_url,
-            'id': character_art.id
-        })
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+#         return jsonify({
+#             'success': True,
+#             'image_url': image_url,
+#             'id': character_art.id
+#         })
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'error': str(e)}), 500
 
 @api_image_GAN.route('/character-history/<username>', methods=['GET'])
 def get_character_history(username):

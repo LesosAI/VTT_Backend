@@ -1,6 +1,9 @@
-# tasks.py
-import threading
-import uuid
+from app import db
+from app.models.user import CharacterArt, CampaignContent, ContentChatHistory
+from app.utils.llm_for_text import generate_text
+from app.routes.routes_image_GAN.routes_image_GAN import generate_prompt_fantasy, generate_prompt_scifi
+from app.utils.davinco_microservice.use_lora.use_lora import generate_character_art
+import os
 
 
 # Global dict to track tasks
@@ -240,13 +243,10 @@ DO NOT add any summary, conclusion, or recap at the end.
     return base_intro + context + examples + final_reminder
 
 def background_generate_campaign(task_id, data, context):
-    from app import db
-    from app.models.user import CampaignContent, ContentChatHistory
-    from app.utils.llm_for_text import generate_text
     from app import app
 
     try:
-        with app.app_context():  # ✅ Ensure application context is active
+        with app.app_context():  # Ensure application context is active
             prompt = build_campaign_prompt(data, context)
             generated_content = generate_text(prompt)
 
@@ -294,6 +294,53 @@ def background_generate_campaign(task_id, data, context):
                 }
             }
 
+
+    except Exception as e:
+        tasks[task_id] = {'status': 'failed', 'error': str(e)}
+
+def background_generate_image(task_id, data):
+    from app import app
+
+    try:
+        with app.app_context():
+            username = data.get('username')
+            description = data.get('description')
+            style = data.get('style')
+            api_key = os.getenv('LEONARDO_API_KEY')
+
+            if style == "fantasy":
+                prompt = generate_prompt_fantasy(description)
+            elif style == "sci-fi":
+                prompt = generate_prompt_scifi(description)
+            else:
+                prompt = description
+
+            prompt = prompt[:1420]  # Leonardo limit
+
+            image_urls = generate_character_art(api_key, prompt)
+
+            if not image_urls:
+                tasks[task_id] = {'status': 'failed', 'error': 'Image generation failed'}
+                return
+
+            image_url = image_urls[0]
+            character_art = CharacterArt(
+                username=username,
+                image_url=image_url,
+                description=description,
+                style=style,
+            )
+
+            db.session.add(character_art)
+            db.session.commit()
+
+            tasks[task_id] = {
+                'status': 'completed',
+                'result': {
+                    'id': character_art.id,
+                    'image_url': character_art.image_url
+                }
+            }
 
     except Exception as e:
         tasks[task_id] = {'status': 'failed', 'error': str(e)}
