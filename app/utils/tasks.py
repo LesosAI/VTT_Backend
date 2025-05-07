@@ -1,7 +1,6 @@
 from app import db
 from app.models.user import CharacterArt, CampaignContent, ContentChatHistory
 from app.utils.llm_for_text import generate_text
-from app.routes.routes_image_GAN.routes_image_GAN import generate_prompt_fantasy, generate_prompt_scifi
 from app.utils.davinco_microservice.use_lora.use_lora import generate_character_art
 import os
 
@@ -299,6 +298,7 @@ def background_generate_campaign(task_id, data, context):
         tasks[task_id] = {'status': 'failed', 'error': str(e)}
 
 def background_generate_image(task_id, data):
+    from app.routes.routes_image_GAN.routes_image_GAN import generate_prompt_fantasy, generate_prompt_scifi
     from app import app
 
     try:
