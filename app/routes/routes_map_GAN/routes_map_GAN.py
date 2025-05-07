@@ -1,4 +1,7 @@
+import threading
+import uuid
 from flask import Blueprint, request, jsonify, send_file, make_response
+from app.utils.tasks import background_generate_map, tasks
 from app.models.user import CharacterArt, User, db, Tag, Map
 import requests
 from datetime import datetime
@@ -13,46 +16,16 @@ load_dotenv()
 @api_map_GAN.route('/generate-map', methods=['POST'])
 def generate_map():
     data = request.json
-    username = data.get('username')
-    description = data.get('description')
-    style = data.get('style')
-    tone = data.get('tone')
-    
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
-    
-    # Generate map using Leonardo AI
-    api_key = os.getenv('LEONARDO_API_KEY')
-    if not api_key:
-        return jsonify({'error': 'Leonardo API key not configured'}), 500
 
-    # Pass description to the generation function
-    image_url = generate_map_art(api_key, description, style)
-    
-    if not image_url:
-        return jsonify({'error': 'Failed to generate map'}), 500
-    
-    # Create new map entry
-    map_entry = Map(
-        username=username,
-        image_url=image_url,
-        description=description,
-        style=style,
-        tone=tone
-    )
-    
-    try:
-        db.session.add(map_entry)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'image_url': image_url,
-            'id': map_entry.id
-        })
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+    if not data.get('username'):
+        return jsonify({'error': 'Username is required'}), 400
+
+    task_id = str(uuid.uuid4())
+    tasks[task_id] = {'status': 'pending'}
+    thread = threading.Thread(target=background_generate_map, args=(task_id, data))
+    thread.start()
+
+    return jsonify({'task_id': task_id}), 202
 
 @api_map_GAN.route('/map-history/<username>', methods=['GET'])
 def get_map_history(username):
