@@ -11,7 +11,7 @@ def generate_character_art(api_key, description="", negative_prompt=""):
     payload = {
         "modelId": "6b645e3a-d64f-4341-a6d8-7a3690fbf042",  # Phoenix 0.9 model
         "prompt": prompt,
-        "negative_prompt": "watermark, signature, logo, copyright symbol, brand name, artist name, stock image markings",
+        "negative_prompt": "extra limbs or fingers or eyes, watermark, signature, any text/symbol at bottom or at corner, logo, copyright symbol, brand name, artist name, stock image markings",
         "num_images": 1,
         "width": 1344,
         "height": 1344,
