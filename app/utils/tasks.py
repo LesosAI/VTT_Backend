@@ -1,7 +1,8 @@
 from app import db
-from app.models.user import CharacterArt, CampaignContent, ContentChatHistory
+from app.models.user import CharacterArt, CampaignContent, ContentChatHistory, Map
 from app.utils.llm_for_text import generate_text
 from app.utils.davinco_microservice.use_lora.use_lora import generate_character_art
+from app.utils.davinco_microservice.use_lora.use_image_lora import generate_map_art
 import os
 
 
@@ -339,6 +340,46 @@ def background_generate_image(task_id, data):
                 'result': {
                     'id': character_art.id,
                     'image_url': character_art.image_url
+                }
+            }
+
+    except Exception as e:
+        tasks[task_id] = {'status': 'failed', 'error': str(e)}
+
+
+def background_generate_map(task_id, data):
+    from app import app
+    try:
+        with app.app_context():
+            api_key = os.getenv('LEONARDO_API_KEY')
+            if not api_key:
+                tasks[task_id] = {'status': 'failed', 'error': 'Leonardo API key not configured'}
+                return
+
+            image_url = generate_map_art(api_key, data['description'], data['style'])
+
+            if not image_url:
+                tasks[task_id] = {'status': 'failed', 'error': 'Map generation failed'}
+                return
+
+            map_entry = Map(
+                username = data.get('username'),
+                image_url=image_url,
+                description = data.get('description'),
+                style = data.get('style'),
+                tone = data.get('tone'),
+            )
+            db.session.add(map_entry)
+            db.session.commit()
+
+            tasks[task_id] = {
+                'status': 'completed',
+                'result': {
+                    'id': map_entry.id,
+                    'image_url': map_entry.image_url,
+                    'description': map_entry.description,
+                    'style': map_entry.style,
+                    'tone': map_entry.tone
                 }
             }
 
