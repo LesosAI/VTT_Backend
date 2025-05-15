@@ -8,7 +8,7 @@ def generate_map_art(api_key, description="", style="fantasy"):
     # Combine prompts
     full_prompt = f"{description}. The map should include clear details of terrain, landmarks, and structures which are related. High quality, detailed cartography style. DO NOT INCLUDE GRID LINES"
     if style.lower() == "sci-fi":
-        lora = 64561
+        lora = 68258
     if style.lower() == "fantasy":
         lora = 64242
 
