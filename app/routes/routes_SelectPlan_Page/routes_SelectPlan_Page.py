@@ -11,6 +11,47 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')  # Make sure this environment va
 
 api_SelectPlan_Page = Blueprint("api_SelectPlan_Page", __name__, url_prefix="")
 
+@api_SelectPlan_Page.route('/api/game-master/prices', methods=['GET'])
+def get_game_master_prices():
+    try:
+        # Fetch all active products
+        products = stripe.Product.list(active=True)
+
+        # Find the Game Master product
+        game_master_product = None
+        for product in products.data:
+            if product.name == "Game Master":
+                game_master_product = product
+                break
+
+        if not game_master_product:
+            return jsonify({"error": "Game Master product not found"}), 404
+
+        # Fetch prices for Game Master product
+        prices = stripe.Price.list(product=game_master_product.id, active=True)
+
+        response = {
+            "product": game_master_product.name,
+            "prices": []
+        }
+
+        for price in prices.data:
+            # Only consider recurring prices (subscriptions)
+            if price.recurring:
+                price_info = {
+                    "price_id": price.id,
+                    "amount": price.unit_amount / 100,  # Convert cents to dollars
+                    "currency": price.currency,
+                    "interval": price.recurring['interval']
+                }
+                response["prices"].append(price_info)
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(f"Error in get_game_master_prices: {e}")
+        return jsonify({"error": "Failed to fetch product prices"}), 500
+
 @api_SelectPlan_Page.route('/create-subscription', methods=['POST'])
 def create_subscription():
     print("Entering create_subscription function")
