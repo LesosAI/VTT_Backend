@@ -19,55 +19,140 @@ from app.models.user import Plan, User, Subscription
 from .routes.routes_image_GAN.routes_image_GAN import api_image_GAN
 from .routes.routes_map_GAN.routes_map_GAN import api_map_GAN
 from .routes.routes_campaign_GAN.routes_campaign_GAN import api_campaign_GAN
+from .routes.routes_admin import api_admin
 import os
 
 
-def initialize_plans():
-    plans = [
-        {
-            "name": "Free",
-            "description": "Basic features to get you started",
-            "price": 0.00,
-            "stripe_price_id": "",  # No stripe price ID for free plan
-            "interval": "month",
-            "usage_limit": 1  # Limited usage for free tier
-        },
-        {
-            "name": "Game Master Monthly",
-            "description": "Full access to all Game Master features",
-            "price": 12.00,
-            "stripe_price_id": "price_1R64E502khdf3R0A1tvUHNbt",
-            "interval": "month",
-            "usage_limit": None  # Unlimited usage
-        },
-        {
-            "name": "Game Master Yearly",
-            "description": "Full access to all Game Master features",
-            "price": 108.00,  # Save by paying yearly
-            "stripe_price_id": "price_1R64E502khdf3R0AbLwQdeAA",
-            "interval": "year",
-            "usage_limit": None  # Unlimited usage
-        },
-       
-    ]
-
-    for plan_data in plans:
-        existing_plan = Plan.query.filter_by(
-            name=plan_data['name'], 
-            interval=plan_data['interval']
-        ).first()
-        if not existing_plan:
-            new_plan = Plan(
-                name=plan_data['name'],
-                description=plan_data['description'],
-                price=plan_data['price'],
-                stripe_price_id=plan_data['stripe_price_id'],
-                interval=plan_data['interval'],
-                usage_limit=plan_data.get('usage_limit')
-            )
-            db.session.add(new_plan)
+# def initialize_plans():
+#     import stripe
+#     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
     
-    db.session.commit()
+#     try:
+#         # Fetch current prices from Stripe
+#         products = stripe.Product.list(active=True)
+#         game_master_product = None
+#         for product in products.data:
+#             if product.name == "Game Master":
+#                 game_master_product = product
+#                 break
+        
+#         if not game_master_product:
+#             print("Game Master product not found in Stripe!")
+#             return
+            
+#         prices = stripe.Price.list(product=game_master_product.id, active=True)
+        
+#         # Create a mapping of interval to price ID
+#         price_mapping = {}
+#         for price in prices.data:
+#             if price.recurring:
+#                 price_mapping[price.recurring['interval']] = price.id
+#                 print(f"Found {price.recurring['interval']} price: {price.id}")
+        
+#         plans = [
+#             {
+#                 "name": "Free",
+#                 "description": "Basic features to get you started",
+#                 "price": 0.00,
+#                 "stripe_price_id": None,  # Use None instead of empty string for free plan
+#                 "interval": "month",
+#                 "usage_limit": 1  # Limited usage for free tier
+#             },
+#             {
+#                 "name": "Game Master Monthly",
+#                 "description": "Full access to all Game Master features",
+#                 "price": 12.00,
+#                 "stripe_price_id": price_mapping.get("month"),
+#                 "interval": "month",
+#                 "usage_limit": None  # Unlimited usage
+#             },
+#             {
+#                 "name": "Game Master Yearly",
+#                 "description": "Full access to all Game Master features",
+#                 "price": 108.00,  # Save by paying yearly
+#                 "stripe_price_id": price_mapping.get("year"),
+#                 "interval": "year",
+#                 "usage_limit": None  # Unlimited usage
+#             },
+#         ]
+        
+#         for plan_data in plans:
+#             existing_plan = Plan.query.filter_by(
+#                 name=plan_data['name'], 
+#                 interval=plan_data['interval']
+#             ).first()
+            
+#             if not existing_plan:
+#                 new_plan = Plan(
+#                     name=plan_data['name'],
+#                     description=plan_data['description'],
+#                     price=plan_data['price'],
+#                     stripe_price_id=plan_data['stripe_price_id'],
+#                     interval=plan_data['interval'],
+#                     usage_limit=plan_data.get('usage_limit')
+#                 )
+#                 db.session.add(new_plan)
+#                 print(f"Created new plan: {plan_data['name']} with price ID: {plan_data['stripe_price_id']}")
+#             else:
+#                 # Update existing plan with current price ID
+#                 existing_plan.stripe_price_id = plan_data['stripe_price_id']
+#                 print(f"Updated {plan_data['name']} with price ID: {plan_data['stripe_price_id']}")
+        
+#         db.session.commit()
+#         print("Plans initialized successfully with current Stripe price IDs")
+        
+#     except Exception as e:
+#         print(f"Error initializing plans: {e}")
+#         db.session.rollback()  # Rollback on error
+        
+#         # Fallback to hardcoded values if Stripe fetch fails
+#         plans = [
+#             {
+#                 "name": "Free",
+#                 "description": "Basic features to get you started",
+#                 "price": 0.00,
+#                 "stripe_price_id": None,  # Use None for free plan
+#                 "interval": "month",
+#                 "usage_limit": 1
+#             },
+#             {
+#                 "name": "Game Master Monthly",
+#                 "description": "Full access to all Game Master features",
+#                 "price": 12.00,
+#                 "stripe_price_id": "price_1RtNA8Ga0fKt27LhlMcI35Jv",
+#                 "interval": "month",
+#                 "usage_limit": None
+#             },
+#             {
+#                 "name": "Game Master Yearly",
+#                 "description": "Full access to all Game Master features",
+#                 "price": 108.00,
+#                 "stripe_price_id": "price_1RtNA8Ga0fKt27LhlMcI35Jv",  # TODO: Update with correct yearly price ID
+#                 "interval": "year",
+#                 "usage_limit": None
+#             },
+#         ]
+        
+#         for plan_data in plans:
+#             existing_plan = Plan.query.filter_by(
+#                 name=plan_data['name'], 
+#                 interval=plan_data['interval']
+#             ).first()
+            
+#             if not existing_plan:
+#                 new_plan = Plan(
+#                     name=plan_data['name'],
+#                     description=plan_data['description'],
+#                     price=plan_data['price'],
+#                     stripe_price_id=plan_data['stripe_price_id'],
+#                     interval=plan_data['interval'],
+#                     usage_limit=plan_data.get('usage_limit')
+#                 )
+#                 db.session.add(new_plan)
+#                 print(f"Created fallback plan: {plan_data['name']}")
+        
+#         db.session.commit()
+#         print("Fallback plans created successfully")
 
 
 def drop_all_tables():
@@ -242,18 +327,16 @@ def create_app():
     app.register_blueprint(api_bp)
     app.register_blueprint(api_map_GAN)
     app.register_blueprint(api_campaign_GAN)
+    app.register_blueprint(api_admin)
 
 
     with app.app_context():
         # Check for schema changes
         has_changes = True
         has_changes = check_schema_changes(app)
+        
+        # In production, don't drop tables - only initialize plans if needed
         # db.drop_all()
-        # drop_all_tables()
-
-
-        # Initialize plans and default user
-        # drop_all_tables()
         # db.create_all()
         # initialize_plans()
         # initialize_default_user()

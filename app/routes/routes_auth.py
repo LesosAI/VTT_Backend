@@ -171,6 +171,7 @@ def send_verification_email_with_graph(recipient_email, token):
 @api_login.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
+    print(f"Signup request received: {data}")
 
     first_name = data.get('firstName')
     last_name = data.get('lastName')
@@ -187,8 +188,15 @@ def signup():
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
     new_user = User(username=email, email=email, first_name=first_name, last_name=last_name, password=hashed_password)
 
+    # Bypass email verification for satyam@gmail.com
+    if email == 'satyam@gmail.com':
+        new_user.is_verified = True
+        print(f"Email verification bypassed for: {email}")
+
     db.session.add(new_user)
     db.session.commit()
+    
+    print(f"User created successfully: {email}, is_verified: {new_user.is_verified}")
 
     return jsonify({"message": "User created successfully"}), 201
 
@@ -206,6 +214,10 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     print(f"User found: {user is not None}")
+    
+    if user:
+        print(f"User details - ID: {user.id}, Email: {user.email}, is_verified: {user.is_verified}")
+        print(f"Password check result: {check_password_hash(user.password, password)}")
 
     if not user or not check_password_hash(user.password, password):
         print("Invalid username or password")

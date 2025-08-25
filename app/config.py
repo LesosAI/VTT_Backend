@@ -12,11 +12,18 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
 
-    database_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
-    if database_url and database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    SQLALCHEMY_DATABASE_URI = database_url
-    # SQLALCHEMY_DATABASE_URI = "postgresql://postgres:pEm8Y9yaYu1n1UDEV04K@autoapplier.cohuqar8xvwd.us-west-2.rds.amazonaws.com:5432/postgres"
+    # Check if we should use SQLite for development
+    if os.getenv('USE_SQLITE', 'false').lower() == 'true':
+        # Use SQLite for development
+        SQLALCHEMY_DATABASE_URI = "sqlite:///dev_database.db"
+        print("Using SQLite database for development")
+    else:
+        # Use PostgreSQL
+        database_url = os.environ.get('SQLALCHEMY_DATABASE_URI')
+        if database_url and database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        SQLALCHEMY_DATABASE_URI = database_url
+        print("Using PostgreSQL database")
 
 class ProductionConfig(Config):
     DEBUG = False
