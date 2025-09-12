@@ -44,7 +44,7 @@ class Plan(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     price = db.Column(db.Float, nullable=False)
-    stripe_price_id = db.Column(db.String(255), unique=True, nullable=False)
+    stripe_price_id = db.Column(db.String(255), unique=True, nullable=True)  # Allow NULL for free plan
     interval = db.Column(db.String(20), nullable=False)  # 'month' or 'year'
     usage_limit = db.Column(db.Integer, nullable=True)  # Add usage limit (null for unlimited)
     subscriptions = db.relationship('Subscription', backref='plan')
