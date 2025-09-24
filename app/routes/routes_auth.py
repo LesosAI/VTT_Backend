@@ -219,8 +219,37 @@ def login():
         print(f"User details - ID: {user.id}, Email: {user.email}, is_verified: {user.is_verified}")
         print(f"Password check result: {check_password_hash(user.password, password)}")
 
-    if not user or not check_password_hash(user.password, password):
-        print("Invalid username or password")
+    if not user:
+        print("User not found")
+        return jsonify({"error": "Invalid username or password"}), 400
+    
+    # Check if user needs password setup
+    needs_password_setup = check_password_hash(user.password, "temp_password_needs_reset")
+    if needs_password_setup:
+        print("User needs password setup")
+        # Send password setup email
+        try:
+            from .password_recovery import send_password_reset_email_with_graph
+            from itsdangerous import URLSafeTimedSerializer
+            import os
+            
+            serializer = URLSafeTimedSerializer(os.getenv('SECRET_KEY'))
+            token = serializer.dumps(user.email, salt="password-reset")
+            send_password_reset_email_with_graph(user.email, token)
+            print(f"Password setup email sent to {user.email}")
+        except Exception as e:
+            print(f"Error sending password setup email: {e}")
+        
+        response_data = {
+            "success": False,
+            "needs_password_setup": True,
+            "message": "Please set up your password. A password setup email has been sent to your email address."
+        }
+        print(f"Returning password setup response: {response_data}")
+        return jsonify(response_data), 200
+    
+    if not check_password_hash(user.password, password):
+        print("Invalid password")
         return jsonify({"error": "Invalid username or password"}), 400
     
     if not user.is_verified:

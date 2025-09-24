@@ -10,39 +10,39 @@ from app.models import db
 load_dotenv()
 
 api_admin = Blueprint("admin", __name__, url_prefix="/admin")
-print("🚀 ADMIN BLUEPRINT CREATED with prefix: /admin")
+print("ADMIN BLUEPRINT CREATED with prefix: /admin")
 
 def admin_required(f):
     """Decorator to check if user is admin - hardcoded email check against env vars"""
     def decorated_function(*args, **kwargs):
-        print(f"🔒 ADMIN_REQUIRED DECORATOR CALLED for function: {f.__name__}")
+        print(f"ADMIN_REQUIRED DECORATOR CALLED for function: {f.__name__}")
         
         # Get email from query parameter (GET requests) or request body (POST/PUT/DELETE)
         email = None
         if request.method == 'GET':
             email = request.args.get('email')
-            print(f"📧 Email from GET query params: {email}")
+            print(f"Email from GET query params: {email}")
         else:
             email = request.get_json().get('email') if request.is_json else None
-            print(f"📧 Email from request body: {email}")
+            print(f"Email from request body: {email}")
         
-        print(f"📧 Final email value: {email}")
+        print(f"Final email value: {email}")
         
         if not email:
-            print("❌ No email parameter found")
+            print("No email parameter found")
             return jsonify({"error": "Email parameter required"}), 400
         
         # Get admin email from environment variables
         admin_email = os.getenv('ADMIN_EMAIL', 'admin@forgelab.pro')
-        print(f"🌍 Environment ADMIN_EMAIL: {admin_email}")
-        print(f"🔍 Comparing email: '{email}' == '{admin_email}' -> {email == admin_email}")
+        print(f"Environment ADMIN_EMAIL: {admin_email}")
+        print(f"Comparing email: '{email}' == '{admin_email}' -> {email == admin_email}")
         
         # Hardcoded admin email check - NO DATABASE QUERY
         if email != admin_email:
-            print("❌ Email does not match admin email - access denied")
+            print("Email does not match admin email - access denied")
             return jsonify({"error": "Admin access required"}), 403
         
-        print("✅ Email matches admin email - access granted")
+        print("Email matches admin email - access granted")
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
@@ -50,34 +50,34 @@ def admin_required(f):
 @api_admin.route('/login', methods=['POST'])
 def admin_login():
     """Admin login endpoint - completely hardcoded, no DB check needed"""
-    print("🔐 ADMIN LOGIN ROUTE ACCESSED")
+    print("ADMIN LOGIN ROUTE ACCESSED")
     try:
         data = request.get_json()
         email = data.get('email')
         password = data.get('password')
         
-        print(f"📧 Received email: {email}")
-        print(f"🔑 Received password: {password}")
+        print(f"Received email: {email}")
+        print(f"Received password: {password}")
         
         if not email or not password:
-            print("❌ Missing email or password")
+            print("Missing email or password")
             return jsonify({"error": "Email and password required"}), 400
         
         # Get admin credentials from environment variables
         admin_email = os.getenv('ADMIN_EMAIL', 'admin@forgelab.pro')
         admin_password = os.getenv('ADMIN_PASSWORD', 'Admin123!')
         
-        print(f"🌍 Environment ADMIN_EMAIL: {admin_email}")
-        print(f"🌍 Environment ADMIN_PASSWORD: {admin_password}")
-        print(f"🔍 Comparing email: '{email}' == '{admin_email}' -> {email == admin_email}")
-        print(f"🔍 Comparing password: '{password}' == '{admin_password}' -> {password == admin_password}")
+        print(f"Environment ADMIN_EMAIL: {admin_email}")
+        print(f"Environment ADMIN_PASSWORD: {admin_password}")
+        print(f"Comparing email: '{email}' == '{admin_email}' -> {email == admin_email}")
+        print(f"Comparing password: '{password}' == '{admin_password}' -> {password == admin_password}")
         
         # Hardcoded admin credentials check - NO DATABASE QUERY
         if email != admin_email or password != admin_password:
-            print("❌ Admin credentials mismatch")
+            print("Admin credentials mismatch")
             return jsonify({"error": "Invalid admin credentials"}), 401
         
-        print("✅ Admin credentials match! Returning success")
+        print("Admin credentials match! Returning success")
         
         # Admin credentials are valid - return success with admin flag
         # No need to check if user exists in database
@@ -99,24 +99,24 @@ def admin_login():
 @api_admin.route('/logout', methods=['POST'])
 def admin_logout():
     """Admin logout endpoint - validate admin and return success"""
-    print("🔐 ADMIN LOGOUT ROUTE ACCESSED")
+    print("ADMIN LOGOUT ROUTE ACCESSED")
     try:
         data = request.get_json()
         email = data.get('email')
         
-        print(f"📧 Received email for logout: {email}")
+        print(f"Received email for logout: {email}")
         
         if not email:
-            print("❌ No email provided for logout")
+            print("No email provided for logout")
             return jsonify({"error": "Email required for logout"}), 400
         
         # Verify this is actually an admin user
         admin_email = os.getenv('ADMIN_EMAIL', 'admin@forgelab.pro')
         if email != admin_email:
-            print("❌ Non-admin user attempting to access admin logout")
+            print("Non-admin user attempting to access admin logout")
             return jsonify({"error": "Admin access required"}), 403
         
-        print("✅ Admin logout successful")
+        print("Admin logout successful")
         return jsonify({
             "success": True, 
             "message": "Admin logout successful"
@@ -129,32 +129,32 @@ def admin_logout():
 @api_admin.route('/check-auth', methods=['GET'])
 def check_admin_auth():
     """Check if admin is authenticated - hardcoded check against env vars"""
-    print("🔍 ADMIN CHECK-AUTH ROUTE ACCESSED")
+    print("ADMIN CHECK-AUTH ROUTE ACCESSED")
     email = request.args.get('email')
     
-    print(f"📧 Received email parameter: {email}")
+    print(f"Received email parameter: {email}")
     
     if not email:
-        print("❌ No email parameter provided")
+        print("No email parameter provided")
         return jsonify({"authenticated": False, "admin": False}), 400
     
     # Get admin email from environment variables
     admin_email = os.getenv('ADMIN_EMAIL', 'admin@forgelab.pro')
-    print(f"🌍 Environment ADMIN_EMAIL: {admin_email}")
-    print(f"🔍 Comparing email: '{email}' == '{admin_email}' -> {email == admin_email}")
+    print(f"Environment ADMIN_EMAIL: {admin_email}")
+    print(f"Comparing email: '{email}' == '{admin_email}' -> {email == admin_email}")
     
     # Simple hardcoded check - NO DATABASE QUERY
     if email == admin_email:
-        print("✅ Email matches admin email! Returning authenticated")
+        print("Email matches admin email! Returning authenticated")
         response_data = {
             "authenticated": True,
             "username": email,
             "admin": True  # This tells frontend user is admin
         }
-        print(f"📤 Sending response: {response_data}")
+        print(f"Sending response: {response_data}")
         return jsonify(response_data), 200
     
-    print("❌ Email does not match admin email")
+    print("Email does not match admin email")
     return jsonify({"authenticated": False, "admin": False}), 401
 
 @api_admin.route('/stats', methods=['GET'])
@@ -165,9 +165,12 @@ def get_admin_stats():
         # Total users count
         total_users = User.query.count()
         
-        # Total subscribed users (users with active subscriptions)
-        subscribed_users = User.query.join(Subscription).filter(
-            Subscription.status == 'active'
+        # Total subscribed users (active, non-Free plans only)
+        subscribed_users = (
+            User.query
+            .join(Subscription)
+            .join(Plan, Subscription.plan_id == Plan.id)
+            .filter(Subscription.status == 'active', Plan.name != 'Free')
         ).count()
         
         # Total campaigns generated
@@ -203,9 +206,12 @@ def get_subscribed_users():
         per_page = request.args.get('per_page', 10, type=int)
         search = request.args.get('search', '', type=str)
         
-        # Query subscribed users (users with active subscriptions)
-        query = User.query.join(Subscription).filter(
-            Subscription.status == 'active'
+        # Query subscribed users (active, non-Free plans only)
+        query = (
+            User.query
+            .join(Subscription)
+            .join(Plan, Subscription.plan_id == Plan.id)
+            .filter(Subscription.status == 'active', Plan.name != 'Free')
         )
         
         # Add search filter if provided
@@ -228,7 +234,7 @@ def get_subscribed_users():
         
         users = []
         for user in pagination.items:
-            subscription = Subscription.query.filter_by(user_id=user.id, status='active').first()
+            subscription = Subscription.query.filter_by(user_id=user.id, status='active').join(Plan).filter(Plan.name != 'Free').first()
             plan = Plan.query.get(subscription.plan_id) if subscription else None
             
             users.append({
