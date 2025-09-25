@@ -7,7 +7,8 @@ from flask_mail import Message
 from flask_sqlalchemy import SQLAlchemy
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy import text
 from dotenv import load_dotenv
 from app.models import db
 from app.utils import mail
@@ -194,7 +195,28 @@ def signup():
         print(f"Email verification bypassed for: {email}")
 
     db.session.add(new_user)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        try:
+            # Resync Postgres sequence for user table and retry
+            db.session.execute(text(
+                """
+                SELECT setval(
+                  pg_get_serial_sequence('user', 'id'),
+                  (SELECT COALESCE(MAX(id), 0) FROM "user"),
+                  true
+                )
+                """
+            ))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
+        # Retry insert once
+        db.session.add(new_user)
+        db.session.commit()
     
     print(f"User created successfully: {email}, is_verified: {new_user.is_verified}")
 

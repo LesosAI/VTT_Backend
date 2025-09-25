@@ -4,6 +4,8 @@ from flask import jsonify, Blueprint, request
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from app.models.user import Plan, Subscription
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 import stripe
 import os
 
@@ -189,7 +191,28 @@ def create_subscription():
             )
             db.session.add(existing_subscription)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            try:
+                # Resync Postgres sequence for subscription table and retry
+                db.session.execute(text(
+                    """
+                    SELECT setval(
+                      pg_get_serial_sequence('subscription', 'id'),
+                      (SELECT COALESCE(MAX(id), 0) FROM subscription),
+                      true
+                    )
+                    """
+                ))
+                # If it was a newly created subscription, ensure it is added again after rollback
+                if existing_subscription and not getattr(existing_subscription, 'id', None):
+                    db.session.add(existing_subscription)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise
 
         print(f"Subscription created/updated successfully: {existing_subscription.id}")
         return jsonify({
@@ -463,7 +486,25 @@ def cancel_user_subscription(username):
             usage_count=0
         )
         db.session.add(new_subscription)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            try:
+                db.session.execute(text(
+                    """
+                    SELECT setval(
+                      pg_get_serial_sequence('subscription', 'id'),
+                      (SELECT COALESCE(MAX(id), 0) FROM subscription),
+                      true
+                    )
+                    """
+                ))
+                db.session.add(new_subscription)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise
 
         return jsonify({
             "message": "Successfully switched to free plan",

@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from sqlalchemy import inspect
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 
 # from app.routes.routes_googleauth.routes_googleauth import api_googlecalendar_Page
 from .routes.routes_auth import api_login
@@ -276,7 +278,39 @@ def initialize_default_user():
         
         db.session.add(subscription)
     
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        try:
+            # Resync sequences for user and subscription tables
+            db.session.execute(text(
+                """
+                SELECT setval(
+                  pg_get_serial_sequence('user', 'id'),
+                  (SELECT COALESCE(MAX(id), 0) FROM "user"),
+                  true
+                )
+                """
+            ))
+            db.session.execute(text(
+                """
+                SELECT setval(
+                  pg_get_serial_sequence('subscription', 'id'),
+                  (SELECT COALESCE(MAX(id), 0) FROM subscription),
+                  true
+                )
+                """
+            ))
+            # Re-add objects after rollback if needed
+            if default_user not in db.session:
+                db.session.add(default_user)
+            if default_plan and subscription not in db.session:
+                db.session.add(subscription)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
     print(f"Created default user: {default_email} with subscription")
 
 
