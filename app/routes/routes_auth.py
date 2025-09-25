@@ -246,7 +246,7 @@ def login():
             "message": "Please set up your password. A password setup email has been sent to your email address."
         }
         print(f"Returning password setup response: {response_data}")
-        return jsonify(response_data), 200
+        return jsonify(response_data), 409
     
     if not check_password_hash(user.password, password):
         print("Invalid password")
