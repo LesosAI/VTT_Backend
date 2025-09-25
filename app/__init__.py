@@ -19,6 +19,7 @@ from app.models.user import Plan, User, Subscription
 from .routes.routes_image_GAN.routes_image_GAN import api_image_GAN
 from .routes.routes_map_GAN.routes_map_GAN import api_map_GAN
 from .routes.routes_campaign_GAN.routes_campaign_GAN import api_campaign_GAN
+from .routes.password_recovery import api_password_recovery
 from .routes.routes_admin import api_admin
 import os
 
@@ -282,18 +283,30 @@ def initialize_default_user():
 def create_app():
     load_dotenv()
     app = Flask(__name__)
-    CORS(app, resources={r"/*": {"origins": "*"}})
-    # CORS(app, resources={
-    #     r"/*": {
-    #         "origins": "*",
-    #         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    #         "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
-    #         "expose_headers": ["Content-Range", "X-Content-Range"],
-    #         "supports_credentials": True,
-    #         "max_age": 600,
-    #         "send_wildcard": False
-    #     }
-    # })
+    CORS(
+        app,
+        resources={
+            r"/*": {
+                "origins": [
+                    "https://app.forgelab.pro",
+                    "https://forgelab.pro",
+                    "http://localhost:3000",
+                    "http://127.0.0.1:3000"
+                ],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+                "allow_headers": [
+                    "Content-Type",
+                    "Authorization",
+                    "Accept",
+                    "Origin",
+                    "X-Requested-With"
+                ],
+                "expose_headers": [],
+                "supports_credentials": False,
+                "max_age": 600,
+            }
+        }
+    )
     # CORS(app, 
     # resources={r"/*": {
     #     "origins": ["http://localhost:3000", "https://aizen-crm-frontend-hmci.vercel.app"],  # Specify exact origins
@@ -328,29 +341,30 @@ def create_app():
     app.register_blueprint(api_map_GAN)
     app.register_blueprint(api_campaign_GAN)
     app.register_blueprint(api_admin)
+    app.register_blueprint(api_password_recovery)
 
 
-    with app.app_context():
-        # Check for schema changes
-        has_changes = True
-        has_changes = check_schema_changes(app)
+    # with app.app_context():
+    #     # Check for schema changes
+    #     has_changes = check_schema_changes(app)
+    #     has_changes = True
         
-        # In production, don't drop tables - only initialize plans if needed
-        # db.drop_all()
-        # db.create_all()
-        # initialize_plans()
-        # initialize_default_user()
+    #     # In production, don't drop tables - only initialize plans if needed
+    #     db.drop_all()
+    #     db.create_all()
+    #     initialize_plans()
+    #     initialize_default_user()
 
-        # if has_changes:
-        #     print("Database schema needs to be updated!")
-        #     # db.drop_all()
-        #     drop_all_tables()
-        #     db.create_all() 
-        #     initialize_plans()
-        #     initialize_default_user()
+    #     if has_changes:
+    #         print("Database schema needs to be updated!")
+    #         # db.drop_all()
+    #         drop_all_tables()
+    #         db.create_all() 
+    #         initialize_plans()
+    #         initialize_default_user()
 
-        # else:
-        #     print("No schema changes detected.")
+    #     else:
+    #         print("No schema changes detected.")
 
     return app
 
