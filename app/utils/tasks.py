@@ -4,6 +4,8 @@ from app.utils.llm_for_text import generate_text
 from app.utils.davinco_microservice.use_lora.use_lora import generate_character_art
 from app.utils.davinco_microservice.use_lora.use_image_lora import generate_map_art
 import os
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 
 
 # Global dict to track tasks
@@ -333,7 +335,28 @@ def background_generate_image(task_id, data):
             )
 
             db.session.add(character_art)
-            db.session.commit()
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                # Resync the sequence for Postgres in case it's out of sync
+                try:
+                    db.session.execute(text(
+                        """
+                        SELECT setval(
+                          pg_get_serial_sequence('character_art', 'id'),
+                          (SELECT COALESCE(MAX(id), 0) FROM character_art),
+                          true
+                        )
+                        """
+                    ))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    raise
+                # Retry once after resetting sequence
+                db.session.add(character_art)
+                db.session.commit()
 
             tasks[task_id] = {
                 'status': 'completed',

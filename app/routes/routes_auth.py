@@ -205,14 +205,27 @@ def signup():
 @api_login.route('/login', methods=['POST'])
 def login():
     print("Login route accessed")
-    data = request.get_json()
+    try:
+        data = request.get_json(force=False, silent=True) or {}
+    except Exception as e:
+        print(f"Error parsing JSON: {e}")
+        data = {}
     print(f"Received data: {data}")
 
-    username = data['username']
-    password = data['password']
-    print(f"Attempting login for user: {username}")
+    # Support either 'username' or 'email' from frontend
+    submitted_identifier = (data.get('username') or data.get('email') or '').strip()
+    password = (data.get('password') or '').strip()
 
-    user = User.query.filter_by(username=username).first()
+    if not submitted_identifier or not password:
+        print("Missing credentials in request body")
+        return jsonify({"error": "Email/username and password are required"}), 400
+
+    print(f"Attempting login for identifier: {submitted_identifier}")
+
+    # Try match by username first, then email
+    user = User.query.filter_by(username=submitted_identifier).first()
+    if not user:
+        user = User.query.filter_by(email=submitted_identifier).first()
     print(f"User found: {user is not None}")
     
     if user:
