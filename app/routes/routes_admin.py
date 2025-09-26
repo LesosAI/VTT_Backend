@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func
-from app.models.user import User, Subscription, Plan, CharacterArt, Map, Campaign
+from app.models.user import User, Subscription, Plan, CharacterArt, Map, Campaign, CampaignContent
 from app.models import db
 
 load_dotenv()
@@ -389,6 +389,129 @@ def get_dashboard_characters():
         
     except Exception as e:
         print(f"💥 Exception in get_dashboard_characters: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@api_admin.route('/dashboard/campaigns', methods=['GET'])
+def get_dashboard_campaigns():
+    """Get all campaigns with pagination for dashboard"""
+    print("DASHBOARD CAMPAIGNS ROUTE ACCESSED")
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 12, type=int)
+        search = request.args.get('search', '', type=str)
+        
+        # Query campaigns
+        query = Campaign.query
+        
+        # Add search filter if provided
+        if search:
+            query = query.filter(
+                db.or_(
+                    Campaign.name.ilike(f'%{search}%'),
+                    Campaign.genre.ilike(f'%{search}%'),
+                    Campaign.tone.ilike(f'%{search}%'),
+                    Campaign.setting.ilike(f'%{search}%')
+                )
+            )
+        
+        # Paginate results
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        campaigns = []
+        for campaign in pagination.items:
+            # Get user info from username
+            user = User.query.filter_by(username=campaign.username).first()
+            
+            campaigns.append({
+                'id': campaign.id,
+                'name': campaign.name,
+                'genre': campaign.genre,
+                'tone': campaign.tone,
+                'setting': campaign.setting,
+                'created_at': campaign.created_at.isoformat() if campaign.created_at else None,
+                'user': {
+                    'username': user.username if user else campaign.username,
+                    'email': user.email if user else 'Unknown'
+                } if user else {'username': campaign.username, 'email': 'Unknown'}
+            })
+        
+        return jsonify({
+            'success': True,
+            'campaigns': campaigns,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': pagination.total,
+                'pages': pagination.pages,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Exception in get_dashboard_campaigns: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@api_admin.route('/dashboard/campaigns/<int:campaign_id>/content', methods=['GET'])
+def get_campaign_content(campaign_id):
+    """Get latest content for a specific campaign"""
+    print(f"DASHBOARD CAMPAIGN CONTENT ROUTE ACCESSED for campaign {campaign_id}")
+    try:
+        # Get the campaign
+        campaign = Campaign.query.get(campaign_id)
+        if not campaign:
+            return jsonify({"error": "Campaign not found"}), 404
+        
+        # Get the latest content (most recent by created_at)
+        latest_content = CampaignContent.query.filter_by(campaign_id=campaign_id)\
+            .order_by(CampaignContent.created_at.desc()).first()
+        
+        if not latest_content:
+            return jsonify({
+                "success": True,
+                "campaign": {
+                    "id": campaign.id,
+                    "name": campaign.name,
+                    "genre": campaign.genre,
+                    "tone": campaign.tone,
+                    "setting": campaign.setting
+                },
+                "content": None,
+                "message": "No content found for this campaign"
+            }), 200
+        
+        # Get user info
+        user = User.query.filter_by(username=campaign.username).first()
+        
+        return jsonify({
+            "success": True,
+            "campaign": {
+                "id": campaign.id,
+                "name": campaign.name,
+                "genre": campaign.genre,
+                "tone": campaign.tone,
+                "setting": campaign.setting,
+                "created_at": campaign.created_at.isoformat() if campaign.created_at else None
+            },
+            "content": {
+                "id": latest_content.id,
+                "content": latest_content.content,
+                "content_category": latest_content.content_category,
+                "description": latest_content.description,
+                "created_at": latest_content.created_at.isoformat() if latest_content.created_at else None
+            },
+            "user": {
+                "username": user.username if user else campaign.username,
+                "email": user.email if user else 'Unknown'
+            } if user else None
+        }), 200
+        
+    except Exception as e:
+        print(f"Exception in get_campaign_content: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @api_admin.route('/users', methods=['GET'])
